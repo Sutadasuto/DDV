@@ -1,0 +1,6 @@
+"datasets_folder": "datasets"
+"transcripts_folder": "texts"
+"audios_folder": "audios"
+"of_target_folder": "of_features"
+"covarep_target_folder": "covarep_features"
+"complementarity_folder": "results"
