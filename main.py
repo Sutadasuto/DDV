@@ -42,22 +42,22 @@ classifierList = [
 ]
 print("List of classifiers ready.")
 
-dataset_name = "court_full_10_splits"
+dataset_name = "court_pruned_10_splits"
 print("Working the %s database" % dataset_name)
 database_folder, plot_title, transcripts_folder, audios_folder, \
 of_target_folder, covarep_target_folder, datasets_folder, complementarity_folder \
     = config.config_database_variables(dataset_name)
 print("Dataset parameters loaded.")
 
-extract_audio = False
+extract_audio = True
 extract_transcripts = False
 
-covarep = False
-openFace = False
+covarep = True
+openFace = True
 time_stamped_pos = False
 
 audio_analysis = True
-text_analyzer = True
+text_analyzer = False
 video_analysis = True
 ngrams = [1, 2, 3, 4]
 ngrams = [1, 2, 3]

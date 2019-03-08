@@ -195,7 +195,8 @@ class AttentionWithContext(Layer):
             uit += self.b
 
         uit = K.tanh(uit)
-        ait = K.dot(uit, self.u)
+        # ait = K.dot(uit, self.u)
+        ait = dot_product(uit, self.u)
 
         a = K.exp(ait)
 
@@ -209,9 +210,16 @@ class AttentionWithContext(Layer):
         # a /= K.cast(K.sum(a, axis=1, keepdims=True), K.floatx())
         a /= K.cast(K.sum(a, axis=1, keepdims=True) + K.epsilon(), K.floatx())
 
-        a = K.expand_dims(a)
-        weighted_input = x * a
-        return K.sum(weighted_input, axis=1)
+        weighted_input = x * K.expand_dims(a)
+        result = K.sum(weighted_input, axis=1)
+
+        if self.return_attention:
+            return [result, a]
+        return result
 
     def compute_output_shape(self, input_shape):
-        return input_shape[0], input_shape[-1]
+        if self.return_attention:
+            return [(input_shape[0], input_shape[-1]),
+                    (input_shape[0], input_shape[1])]
+        else:
+            return input_shape[0], input_shape[-1]

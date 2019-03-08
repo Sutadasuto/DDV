@@ -1,6 +1,8 @@
 from numpy.random import seed
+
 seed(1)
 from tensorflow import set_random_seed
+
 set_random_seed(2)
 
 from keras.models import Sequential
@@ -21,14 +23,14 @@ import pandas
 def baseline_model(timesteps, data_dim, output, dropout=None, return_sequences=False, gpu=True):
     # expected input data shape: (batch_size, timesteps, data_dim)
     # create model
-    #def prepare_model(timesteps, data_dim, num_classes):
+    # def prepare_model(timesteps, data_dim, num_classes):
     model = Sequential()
     if gpu:
         model.add(CuDNNLSTM(20, return_sequences=return_sequences,
-                       input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
+                            input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
     else:
         model.add(LSTM(20, return_sequences=return_sequences,
-                            input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
+                       input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
     # model.add(CuDNNLSTM(32, return_sequences=True))  # returns a sequence of vectors of dimension 32
     # model.add(CuDNNLSTM(32))  # return a single vector of dimension 32
     # model.add(Dense(1, activation='sigmoid'))
@@ -41,7 +43,7 @@ def baseline_model(timesteps, data_dim, output, dropout=None, return_sequences=F
                   optimizer='adam',
                   metrics=['accuracy'])
     return model
-    #return prepare_model(timesteps, data_dim, num_classes)
+    # return prepare_model(timesteps, data_dim, num_classes)
 
 
 # define baseline model
@@ -174,8 +176,8 @@ def basic_binary_lstm_cv(input):
 
     classifier = KerasClassifier(build_fn=create_basic_lstm, timesteps=X.shape[1], data_dim=X.shape[2], output=1,
                                  dropout=None, gpu=False, epochs=50, batch_size=8, verbose=1)
-    kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
-    results = cross_val_score(classifier, X, Y, cv=kfold, verbose=1)
+    folds = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
+    results = cross_val_score(classifier, X, Y, cv=folds, verbose=1)
     print("Result: %.2f%% (%.2f%%)" % (results.mean() * 100, results.std() * 100))
     # model.summary()
     # print("Initial parameters:")
@@ -212,10 +214,28 @@ def create_basic_lstm(timesteps=1, data_dim=1, output=1, dropout=None, gpu=True)
     return model
 
 
+def create_basic_lstm_double_dense(timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
+    # expected input data shape: (batch_size, timesteps, data_dim)
+    # create model
+    model = Sequential()
+    if gpu:
+        model.add(CuDNNLSTM(20, input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
+    else:
+        model.add(LSTM(20, input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
+    if dropout is float:
+        model.add(Dropout(dropout))
+    model.add(Dense(20))
+    model.add(Dense(output, kernel_initializer="normal", activation="sigmoid"))
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model
+
+
 def create_model():
     model = Sequential()
     model.add(LSTM(20, return_sequences=False,
-                        input_shape=(2799, 75)))  # returns a sequence of vectors of dimension 32
+                   input_shape=(2799, 75)))  # returns a sequence of vectors of dimension 32
     model.add(Dense(1, kernel_initializer="normal", activation="sigmoid"))
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
@@ -223,33 +243,16 @@ def create_model():
     return model
 
 
-def create_stacking_lstm2(timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
+def create_attention_lstm(timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
     # expected input data shape: (batch_size, timesteps, data_dim)
     # create model
     model = Sequential()
     if gpu:
-        model.add(CuDNNLSTM(20, input_shape=(timesteps, data_dim), return_sequences=True))  # returns a sequence of vectors of dimension 32
+        model.add(CuDNNLSTM(20, input_shape=(timesteps, data_dim),
+                            return_sequences=True))  # returns a sequence of vectors of dimension 32
     else:
-        model.add(LSTM(20, input_shape=(timesteps, data_dim), return_sequences=True))  # returns a sequence of vectors of dimension 32
-    if dropout is float:
-        model.add(Dropout(dropout))
-    model.add(TimeDistributed(Dense(output)))
-    model.add(Dense(output, kernel_initializer="normal", activation="sigmoid"))
-    model.compile(loss='binary_crossentropy',
-                  optimizer='adam',
-                  metrics=['accuracy'])
-    model.summary()
-    return model
-
-
-def create_stacking_lstm(timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
-    # expected input data shape: (batch_size, timesteps, data_dim)
-    # create model
-    model = Sequential()
-    if gpu:
-        model.add(CuDNNLSTM(20, input_shape=(timesteps, data_dim), return_sequences=True))  # returns a sequence of vectors of dimension 32
-    else:
-        model.add(LSTM(20, input_shape=(timesteps, data_dim), return_sequences=True))  # returns a sequence of vectors of dimension 32
+        model.add(LSTM(20, input_shape=(timesteps, data_dim),
+                       return_sequences=True))  # returns a sequence of vectors of dimension 32
     if dropout is float:
         model.add(Dropout(dropout))
     model.add(Attention())
@@ -257,7 +260,26 @@ def create_stacking_lstm(timesteps=1, data_dim=1, output=1, dropout=None, gpu=Tr
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
                   metrics=['accuracy'])
-    model.summary()
+    return model
+
+
+def create_attention_context_lstm(timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
+    # expected input data shape: (batch_size, timesteps, data_dim)
+    # create model
+    model = Sequential()
+    if gpu:
+        model.add(CuDNNLSTM(20, input_shape=(timesteps, data_dim),
+                            return_sequences=True))  # returns a sequence of vectors of dimension 32
+    else:
+        model.add(LSTM(20, input_shape=(timesteps, data_dim),
+                       return_sequences=True))  # returns a sequence of vectors of dimension 32
+    if dropout is float:
+        model.add(Dropout(dropout))
+    model.add(AttentionWithContext())
+    model.add(Dense(output, kernel_initializer="normal", activation="sigmoid"))
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
     return model
 
 
@@ -280,11 +302,11 @@ def dense_binary_lstm(input):
                             and f.endswith(".csv")], key=lambda f: f.lower())
             for file in files:
                 df = pandas.read_csv(os.path.join(input, class_name, file))
-                X.append(df.values[:,1:])
+                X.append(df.values[:, 1:])
                 sequence_lengths.append(len(df.values))
                 Y.append(class_name)
         sequence_lengths = np.array(sequence_lengths)
-        avg_length = int(sum(sequence_lengths)/len(sequence_lengths))
+        avg_length = int(sum(sequence_lengths) / len(sequence_lengths))
         X = np.array(X)
         X = sequence.pad_sequences(X, maxlen=avg_length)
         Y = np.array(Y)
@@ -294,18 +316,18 @@ def dense_binary_lstm(input):
         # Y = np_utils.to_categorical(Y)
         # Y = [copy.deepcopy(Y.reshape(-1,1)) for i in range(X.shape[1])]
         # Y = np.array(Y)
-    
-    model = baseline_model(X.shape[1], X.shape[2], 1, 0.5, False) # 1 for one class only (binary classification)
+
+    model = baseline_model(X.shape[1], X.shape[2], 1, 0.5, False)  # 1 for one class only (binary classification)
     model.summary()
     pred_labels = model.predict(X)
     for i in range(len(Y)):
         print("Predicted: %s, Real: %s" % (pred_labels[i], Y[i]))
-    a=0
+    a = 0
     model.fit(X, Y, epochs=5, batch_size=32, verbose=1, validation_split=0.0)
     pred_labels = model.predict(X)
     for i in range(len(Y)):
         print("Predicted: %s, Real: %s" % (pred_labels[i], Y[i]))
-    a=0
+    a = 0
 
 
 def get_data(input):
@@ -369,8 +391,8 @@ def test(gpu=False):
     plt.plot(y, predict - y, 'C2')
     plt.ylim(ymax=3, ymin=-3)
     plt.show()
-    
-    
+
+
 def stacked_h_binary_lstm(input):
     # Input can be either a folder containing csv files or a .npy file
     if input.endswith(".npy"):
@@ -384,12 +406,12 @@ def stacked_h_binary_lstm(input):
 
     classifier = KerasClassifier(build_fn=create_basic_lstm, timesteps=X.shape[1], data_dim=X.shape[2], output=1,
                                  dropout=None, gpu=False, epochs=50, batch_size=8, verbose=1)
-    kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
-    results = cross_val_score(classifier, X, Y, cv=kfold, verbose=1)
+    folds = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
+    results = cross_val_score(classifier, X, Y, cv=folds, verbose=1)
     print("Result: %.2f%% (%.2f%%)" % (results.mean() * 100, results.std() * 100))
 
 
-def standard_vs_binary(input):
+def standard_vs_binary(input, cv=10):
     # Input can be either a folder containing csv files or a .npy file
     if input.endswith(".npy"):
         loaded_array = np.load(input)
@@ -401,11 +423,27 @@ def standard_vs_binary(input):
     seed = 8
 
     classifier_basic = KerasClassifier(build_fn=create_basic_lstm, timesteps=X.shape[1], data_dim=X.shape[2], output=1,
-                                 dropout=None, gpu=True, epochs=50, batch_size=32, verbose=1)
-    classifier_stacking = KerasClassifier(build_fn=create_stacking_lstm, timesteps=X.shape[1], data_dim=X.shape[2], output=1,
-                                       dropout=None, gpu=True, epochs=50, batch_size=32, verbose=1)
-    kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
-    results_stacking = cross_val_score(classifier_stacking, X, Y, cv=kfold, verbose=1)#, n_jobs=-1)
-    results_basic = cross_val_score(classifier_basic, X, Y, cv=kfold, verbose=1, n_jobs=-1)
+                                       dropout=None, gpu=True, epochs=50, batch_size=1, verbose=1)
+    classifier_double_dense = KerasClassifier(build_fn=create_basic_lstm, timesteps=X.shape[1], data_dim=X.shape[2],
+                                              output=1,
+                                              dropout=None, gpu=True, epochs=50, batch_size=1, verbose=1)
+    classifier_attention = KerasClassifier(build_fn=create_attention_lstm, timesteps=X.shape[1], data_dim=X.shape[2],
+                                           output=1,
+                                           dropout=None, gpu=True, epochs=50, batch_size=1, verbose=1)
+    # classifier_attention_context = KerasClassifier(build_fn=create_attention_context_lstm(), timesteps=X.shape[1],
+    #                                                data_dim=X.shape[2],
+    #                                                output=1,
+    #                                                dropout=None, gpu=True, epochs=50, batch_size=1, verbose=1)
+    if cv is int:
+        folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=seed)
+    else:
+        folds = cv
+    results_basic = cross_val_score(classifier_basic, X, Y, cv=folds, verbose=1)  # , n_jobs=-1)
+    results_double_dense = cross_val_score(classifier_double_dense, X, Y, cv=folds, verbose=1)  # , n_jobs=-1)
+    results_attention = cross_val_score(classifier_attention, X, Y, cv=folds, verbose=1)  # , n_jobs=-1)
+    # results_attention_context = cross_val_score(classifier_attention_context, X, Y, cv=folds, verbose=1)  # , n_jobs=-1)
     print("Result basic: %.2f%% (%.2f%%)" % (results_basic.mean() * 100, results_basic.std() * 100))
-    print("Result stacking: %.2f%% (%.2f%%)" % (results_stacking.mean() * 100, results_stacking.std() * 100))
+    print("Result double dense: %.2f%% (%.2f%%)" % (results_double_dense.mean() * 100, results_basic.std() * 100))
+    print("Result attention: %.2f%% (%.2f%%)" % (results_attention.mean() * 100, results_attention.std() * 100))
+    # print("Result attention with context: %.2f%% (%.2f%%)" % (
+    #     results_attention_context.mean() * 100, results_attention_context.std() * 100))

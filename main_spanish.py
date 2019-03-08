@@ -42,7 +42,7 @@ classifierList = [
 ]
 print("List of classifiers ready.")
 
-dataset_name = "aborto_amigo"
+dataset_name = "aborto_amigo_10_splits"
 print("Working the %s database" % dataset_name)
 database_folder, plot_title, transcripts_folder, audios_folder, \
 of_target_folder, covarep_target_folder, datasets_folder, complementarity_folder \
@@ -56,20 +56,20 @@ covarep = False
 openFace = False
 time_stamped_pos = False
 
-audioAnalysis = True
+audioAnalysis = False
 textAnalyzer = False
-videoAnalysis = True
+videoAnalysis = False
 ngrams = [1, 2, 3, 4]
 
-mixup = False
-earlyFusions = False
+mixup = True
+earlyFusions = True
 
-analysis = True
-features_analysis = True
-fusion_analysis = True
-complementariy_analysis = True
+analysis = False
+features_analysis = False
+fusion_analysis = False
+complementariy_analysis = False
 
-boosting_comparison = True
+boosting_comparison = False
 
 folds = 10
 try:
