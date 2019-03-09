@@ -9,8 +9,8 @@ from tools import config
 # folder = "/media/sutadasuto/OS/Users/Sutadasuto/Google Drive/INAOE/Thesis/Real-life_Deception_Detection_2016/Clips_/covarep_features"
 # folder = "/media/winbuntu/google-drive/INAOE/Thesis/SpanishDatabase/Aborto_Amigo_/covarep_features"
 
-dataset_name = "court_full"
-print("Working the %s database" % dataset_name)
+dataset_name = "court_full_10_splits"
+print("\n****\nWorking the %s database\n****\n" % dataset_name)
 database_folder, plot_title, transcripts_folder, audios_folder, \
 of_target_folder, covarep_target_folder, datasets_folder, complementarity_folder \
     = config.config_database_variables(dataset_name)

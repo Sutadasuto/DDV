@@ -6,7 +6,7 @@ from tensorflow import set_random_seed
 set_random_seed(2)
 
 from keras.models import Sequential
-from keras.layers import Dense, LSTM, CuDNNLSTM, Activation, Dropout, TimeDistributed
+from keras.layers import Dense, LSTM, CuDNNLSTM, Activation, Dropout, TimeDistributed, Bidirectional
 from keras.preprocessing import sequence
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras_tools.attention_layers import Attention, AttentionWithContext
@@ -197,14 +197,14 @@ def basic_binary_lstm_cv(input):
     # a = 0
 
 
-def create_basic_lstm(timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
+def create_basic_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
     # expected input data shape: (batch_size, timesteps, data_dim)
     # create model
     model = Sequential()
     if gpu:
-        model.add(CuDNNLSTM(20, input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
+        model.add(CuDNNLSTM(hu, input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
     else:
-        model.add(LSTM(20, input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
+        model.add(LSTM(hu, input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
     if dropout is float:
         model.add(Dropout(dropout))
     model.add(Dense(output, kernel_initializer="normal", activation="sigmoid"))
@@ -214,17 +214,17 @@ def create_basic_lstm(timesteps=1, data_dim=1, output=1, dropout=None, gpu=True)
     return model
 
 
-def create_basic_lstm_double_dense(timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
+def create_basic_lstm_double_dense(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
     # expected input data shape: (batch_size, timesteps, data_dim)
     # create model
     model = Sequential()
     if gpu:
-        model.add(CuDNNLSTM(20, input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
+        model.add(CuDNNLSTM(hu, input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
     else:
-        model.add(LSTM(20, input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
+        model.add(LSTM(hu, input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
     if dropout is float:
         model.add(Dropout(dropout))
-    model.add(Dense(20))
+    model.add(Dense(int(hu/2)))
     model.add(Dense(output, kernel_initializer="normal", activation="sigmoid"))
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
@@ -243,15 +243,15 @@ def create_model():
     return model
 
 
-def create_attention_lstm(timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
+def create_attention_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
     # expected input data shape: (batch_size, timesteps, data_dim)
     # create model
     model = Sequential()
     if gpu:
-        model.add(CuDNNLSTM(20, input_shape=(timesteps, data_dim),
+        model.add(CuDNNLSTM(hu, input_shape=(timesteps, data_dim),
                             return_sequences=True))  # returns a sequence of vectors of dimension 32
     else:
-        model.add(LSTM(20, input_shape=(timesteps, data_dim),
+        model.add(LSTM(hu, input_shape=(timesteps, data_dim),
                        return_sequences=True))  # returns a sequence of vectors of dimension 32
     if dropout is float:
         model.add(Dropout(dropout))
@@ -263,15 +263,15 @@ def create_attention_lstm(timesteps=1, data_dim=1, output=1, dropout=None, gpu=T
     return model
 
 
-def create_attention_context_lstm(timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
+def create_attention_context_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
     # expected input data shape: (batch_size, timesteps, data_dim)
     # create model
     model = Sequential()
     if gpu:
-        model.add(CuDNNLSTM(20, input_shape=(timesteps, data_dim),
+        model.add(CuDNNLSTM(hu, input_shape=(timesteps, data_dim),
                             return_sequences=True))  # returns a sequence of vectors of dimension 32
     else:
-        model.add(LSTM(20, input_shape=(timesteps, data_dim),
+        model.add(LSTM(hu, input_shape=(timesteps, data_dim),
                        return_sequences=True))  # returns a sequence of vectors of dimension 32
     if dropout is float:
         model.add(Dropout(dropout))
@@ -422,18 +422,23 @@ def standard_vs_binary(input, cv=10):
 
     seed = 8
 
-    classifier_basic = KerasClassifier(build_fn=create_basic_lstm, timesteps=X.shape[1], data_dim=X.shape[2], output=1,
-                                       dropout=None, gpu=True, epochs=50, batch_size=1, verbose=1)
-    classifier_double_dense = KerasClassifier(build_fn=create_basic_lstm, timesteps=X.shape[1], data_dim=X.shape[2],
+    hu = 200
+    dropout = 0.5
+    epochs = 100
+    batch_size = 32
+    gpu = True
+    classifier_basic = KerasClassifier(build_fn=create_basic_lstm, hu=hu, timesteps=X.shape[1], data_dim=X.shape[2], output=1,
+                                       dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size, verbose=1)
+    classifier_double_dense = KerasClassifier(build_fn=create_basic_lstm, hu=hu, timesteps=X.shape[1], data_dim=X.shape[2],
                                               output=1,
-                                              dropout=None, gpu=True, epochs=50, batch_size=1, verbose=1)
-    classifier_attention = KerasClassifier(build_fn=create_attention_lstm, timesteps=X.shape[1], data_dim=X.shape[2],
+                                              dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size, verbose=1)
+    classifier_attention = KerasClassifier(build_fn=create_attention_lstm, hu=hu, timesteps=X.shape[1], data_dim=X.shape[2],
                                            output=1,
-                                           dropout=None, gpu=True, epochs=50, batch_size=1, verbose=1)
-    # classifier_attention_context = KerasClassifier(build_fn=create_attention_context_lstm(), timesteps=X.shape[1],
-    #                                                data_dim=X.shape[2],
-    #                                                output=1,
-    #                                                dropout=None, gpu=True, epochs=50, batch_size=1, verbose=1)
+                                           dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size, verbose=1)
+    classifier_attention_context = KerasClassifier(build_fn=create_attention_context_lstm, hu=hu, timesteps=X.shape[1],
+                                                   data_dim=X.shape[2],
+                                                   output=1,
+                                                   dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size, verbose=1)
     if cv is int:
         folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=seed)
     else:
@@ -441,9 +446,22 @@ def standard_vs_binary(input, cv=10):
     results_basic = cross_val_score(classifier_basic, X, Y, cv=folds, verbose=1)  # , n_jobs=-1)
     results_double_dense = cross_val_score(classifier_double_dense, X, Y, cv=folds, verbose=1)  # , n_jobs=-1)
     results_attention = cross_val_score(classifier_attention, X, Y, cv=folds, verbose=1)  # , n_jobs=-1)
-    # results_attention_context = cross_val_score(classifier_attention_context, X, Y, cv=folds, verbose=1)  # , n_jobs=-1)
+    results_attention_context = cross_val_score(classifier_attention_context, X, Y, cv=folds, verbose=1)  # , n_jobs=-1)
+    print("Database: %s" % os.path.split(input)[-2])
+    print("Data: %s" % os.path.split(input)[-1])
+    print("Hidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s" % (hu, epochs, batch_size, dropout))
     print("Result basic: %.2f%% (%.2f%%)" % (results_basic.mean() * 100, results_basic.std() * 100))
     print("Result double dense: %.2f%% (%.2f%%)" % (results_double_dense.mean() * 100, results_basic.std() * 100))
     print("Result attention: %.2f%% (%.2f%%)" % (results_attention.mean() * 100, results_attention.std() * 100))
-    # print("Result attention with context: %.2f%% (%.2f%%)" % (
-    #     results_attention_context.mean() * 100, results_attention_context.std() * 100))
+    print("Result attention with context: %.2f%% (%.2f%%)" % (
+        results_attention_context.mean() * 100, results_attention_context.std() * 100))
+
+    with open(os.path.join(os.path.split(input)[-2], "keras_results.txt"), "w+") as output:
+        output.write("Database: %s\n" % os.path.split(input)[-2])
+        output.write("Data: %s" % os.path.split(input)[-1])
+        output.write("Hidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s\n" % (hu, epochs, batch_size, dropout))
+        output.write("Result basic: %.2f%% (%.2f%%)\n" % (results_basic.mean() * 100, results_basic.std() * 100))
+        output.write("Result double dense: %.2f%% (%.2f%%)\n" % (results_double_dense.mean() * 100, results_basic.std() * 100))
+        output.write("Result attention: %.2f%% (%.2f%%)\n" % (results_attention.mean() * 100, results_attention.std() * 100))
+        output.write("Result attention with context: %.2f%% (%.2f%%)\n" % (
+            results_attention_context.mean() * 100, results_attention_context.std() * 100))

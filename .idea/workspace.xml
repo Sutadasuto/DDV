@@ -2,12 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d96072d4-6cda-422a-bc36-1ddf25629609" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/keras_tools/lmnn.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/keras_tools/attention_layers.py" beforeDir="false" afterPath="$PROJECT_DIR$/keras_tools/attention_layers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/keras_tools/lstm.py" beforeDir="false" afterPath="$PROJECT_DIR$/keras_tools/lstm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main_lstm.py" beforeDir="false" afterPath="$PROJECT_DIR$/main_lstm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main_spanish.py" beforeDir="false" afterPath="$PROJECT_DIR$/main_spanish.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -20,8 +19,17 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="364">
+            <state>
               <caret line="13" selection-start-line="13" selection-end-line="13" selection-end-column="35" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tools/subject_analysis.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-5773">
+              <caret line="32" column="40" lean-forward="true" selection-start-line="32" selection-start-column="40" selection-end-line="32" selection-end-column="40" />
             </state>
           </provider>
         </entry>
@@ -29,8 +37,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/main_lstm.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="588">
-              <caret line="26" selection-start-line="26" selection-end-line="26" />
+            <state relative-caret-position="601">
+              <caret line="26" lean-forward="true" selection-start-line="26" selection-end-line="26" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -41,17 +49,21 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/keras_tools/lstm.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="168">
-              <caret line="267" column="18" lean-forward="true" selection-start-line="267" selection-start-column="18" selection-end-line="267" selection-end-column="18" />
+            <state relative-caret-position="354">
+              <caret line="423" lean-forward="true" selection-start-line="423" selection-end-line="423" />
+              <folding>
+                <element signature="e#690#1851#0" />
+                <element signature="e#1987#3275#0" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/keras_tools/attention_layers.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="504">
-              <caret line="219" column="48" selection-start-line="219" selection-start-column="48" selection-end-line="219" selection-end-column="48" />
+            <state relative-caret-position="555">
+              <caret line="104" column="27" lean-forward="true" selection-start-line="104" selection-start-column="27" selection-end-line="104" selection-end-column="27" />
               <folding>
                 <element signature="e#783#2319#0" />
               </folding>
@@ -59,13 +71,15 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tools/machine_learning.py">
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/keras_tools/lmnn.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="392">
-              <caret line="14" column="36" selection-start-line="14" selection-start-column="36" selection-end-line="14" selection-end-column="36" />
+            <state relative-caret-position="545">
+              <caret line="68" column="59" selection-start-line="68" selection-start-column="59" selection-end-line="68" selection-end-column="59" />
               <folding>
-                <element signature="e#0#18#0" expanded="true" />
+                <element signature="e#0#12#0" expanded="true" />
+                <element signature="e#38#41#0" />
+                <element signature="e#90#985#0" />
               </folding>
             </state>
           </provider>
@@ -83,7 +97,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tools/arff_and_matrices.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2184">
+            <state relative-caret-position="713">
               <caret line="82" selection-start-line="82" selection-end-line="82" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
@@ -107,7 +121,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/video/video_analysis.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2492">
+            <state relative-caret-position="713">
               <caret line="95" column="19" selection-start-line="95" selection-start-column="19" selection-end-line="95" selection-end-column="19" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
@@ -127,12 +141,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>video_a</find>
-      <find>earlyFusions</find>
-      <find>early_fusions</find>
-      <find>check_cv</find>
-      <find>def check_cv</find>
-      <find>analyzedFiles =</find>
       <find>analyzedFile</find>
       <find>liwc</find>
       <find>txt</find>
@@ -157,6 +165,12 @@
       <find>folds</find>
       <find>StratifiedKfold</find>
       <find>def create_</find>
+      <find>return_atten</find>
+      <find>compile</find>
+      <find>get_</find>
+      <find>get_da</find>
+      <find>create</find>
+      <find>_attent</find>
     </findStrings>
     <replaceStrings>
       <replace>covarep_target_folder</replace>
@@ -206,9 +220,10 @@
         <option value="$PROJECT_DIR$/tools/lstm.py" />
         <option value="$PROJECT_DIR$/keras/attention_layers.py" />
         <option value="$PROJECT_DIR$/tools/machine_learning.py" />
+        <option value="$PROJECT_DIR$/keras_tools/attention_layers.py" />
         <option value="$PROJECT_DIR$/main_lstm.py" />
         <option value="$PROJECT_DIR$/keras_tools/lstm.py" />
-        <option value="$PROJECT_DIR$/keras_tools/attention_layers.py" />
+        <option value="$PROJECT_DIR$/keras_tools/lmnn.py" />
       </list>
     </option>
   </component>
@@ -224,6 +239,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -260,7 +276,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -379,7 +394,7 @@
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Run" order="2" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.3681055" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.34149054" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -442,13 +457,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/keras_tools/lstm.py</url>
-          <line>437</line>
+          <line>442</line>
           <option name="timeStamp" value="211" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/main_lstm.py</url>
-          <line>25</line>
-          <option name="timeStamp" value="212" />
+          <url>file://$PROJECT_DIR$/keras_tools/lstm.py</url>
+          <line>425</line>
+          <option name="timeStamp" value="213" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -510,6 +525,21 @@
     </expressions>
     <expressions id="evaluateExpression">
       <expression>
+        <expression-string>os.path.split(input)</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>os.path.split(input)[-1]</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>os.path.split(input)[-2]</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
         <expression-string>class</expression-string>
         <language-id>Python</language-id>
         <evaluation-mode>EXPRESSION</evaluation-mode>
@@ -536,26 +566,6 @@
       </expression>
       <expression>
         <expression-string>K.int_shape(x)</expression-string>
-        <language-id>Python</language-id>
-        <evaluation-mode>EXPRESSION</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>K.int_shape(K.expand_dims(x))</expression-string>
-        <language-id>Python</language-id>
-        <evaluation-mode>EXPRESSION</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>K.expand_dims(x)</expression-string>
-        <language-id>Python</language-id>
-        <evaluation-mode>EXPRESSION</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>K.concatenate(x,-1)</expression-string>
-        <language-id>Python</language-id>
-        <evaluation-mode>EXPRESSION</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>a.shape.eval()</expression-string>
         <language-id>Python</language-id>
         <evaluation-mode>EXPRESSION</evaluation-mode>
       </expression>
@@ -676,13 +686,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tools/subject_analysis.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="404">
-          <caret line="24" column="30" selection-start-line="24" selection-start-column="30" selection-end-line="24" selection-end-column="30" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/miniconda3/envs/thesis/lib/python3.6/codecs.py" />
     <entry file="file://$PROJECT_DIR$/audio/audio_analysis.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -708,23 +711,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="364">
-          <caret line="13" selection-start-line="13" selection-end-line="13" selection-end-column="35" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/main_lstm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="588">
-          <caret line="26" selection-start-line="26" selection-end-line="26" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/tools/machine_learning.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="392">
@@ -742,16 +728,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tools/arff_and_matrices.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2184">
-          <caret line="82" selection-start-line="82" selection-end-line="82" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/text/text_analysis.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="4004">
@@ -762,10 +738,54 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/tools/subject_analysis.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-5773">
+          <caret line="32" column="40" lean-forward="true" selection-start-line="32" selection-start-column="40" selection-end-line="32" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret line="13" selection-start-line="13" selection-end-line="13" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/video/video_analysis.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2492">
+        <state relative-caret-position="713">
           <caret line="95" column="19" selection-start-line="95" selection-start-column="19" selection-end-line="95" selection-end-column="19" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tools/arff_and_matrices.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="713">
+          <caret line="82" selection-start-line="82" selection-end-line="82" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/keras_tools/attention_layers.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="555">
+          <caret line="104" column="27" lean-forward="true" selection-start-line="104" selection-start-column="27" selection-end-line="104" selection-end-column="27" />
+          <folding>
+            <element signature="e#783#2319#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main_lstm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="601">
+          <caret line="26" lean-forward="true" selection-start-line="26" selection-end-line="26" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
@@ -774,17 +794,23 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/keras_tools/lstm.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="168">
-          <caret line="267" column="18" lean-forward="true" selection-start-line="267" selection-start-column="18" selection-end-line="267" selection-end-column="18" />
+        <state relative-caret-position="354">
+          <caret line="423" lean-forward="true" selection-start-line="423" selection-end-line="423" />
+          <folding>
+            <element signature="e#690#1851#0" />
+            <element signature="e#1987#3275#0" />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/keras_tools/attention_layers.py">
+    <entry file="file://$PROJECT_DIR$/keras_tools/lmnn.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="504">
-          <caret line="219" column="48" selection-start-line="219" selection-start-column="48" selection-end-line="219" selection-end-column="48" />
+        <state relative-caret-position="545">
+          <caret line="68" column="59" selection-start-line="68" selection-start-column="59" selection-end-line="68" selection-end-column="59" />
           <folding>
-            <element signature="e#783#2319#0" />
+            <element signature="e#0#12#0" expanded="true" />
+            <element signature="e#38#41#0" />
+            <element signature="e#90#985#0" />
           </folding>
         </state>
       </provider>

@@ -145,7 +145,7 @@ class AttentionWithContext(Layer):
     def __init__(self,
                  W_regularizer=None, u_regularizer=None, b_regularizer=None,
                  W_constraint=None, u_constraint=None, b_constraint=None,
-                 bias=True, **kwargs):
+                 bias=True, return_attention=False, **kwargs):
 
         self.supports_masking = True
         self.init = initializers.get('glorot_uniform')
@@ -159,6 +159,7 @@ class AttentionWithContext(Layer):
         self.b_constraint = constraints.get(b_constraint)
 
         self.bias = bias
+        self.return_attention = return_attention
         super(AttentionWithContext, self).__init__(**kwargs)
 
     def build(self, input_shape):
