@@ -9,7 +9,7 @@ from tools import config
 # folder = "/media/sutadasuto/OS/Users/Sutadasuto/Google Drive/INAOE/Thesis/Real-life_Deception_Detection_2016/Clips_/covarep_features"
 # folder = "/media/winbuntu/google-drive/INAOE/Thesis/SpanishDatabase/Aborto_Amigo_/covarep_features"
 
-dataset_name = "court_full_10_splits"
+dataset_name = "court_pruned"
 print("\n****\nWorking the %s database\n****\n" % dataset_name)
 database_folder, plot_title, transcripts_folder, audios_folder, \
 of_target_folder, covarep_target_folder, datasets_folder, complementarity_folder \
@@ -23,4 +23,4 @@ custom_folds, custom_dicts = sa.get_cross_iterable(
 
 # lstm.test()
 # my_lstm = lstm.basic_binary_lstm_cv(folder)
-lstm.standard_vs_binary(covarep_target_folder, custom_folds)
+lstm.standard_vs_binary(of_target_folder, custom_folds)

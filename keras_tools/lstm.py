@@ -1,19 +1,25 @@
+#####
+# To deal with random initializations
 from numpy.random import seed
 
 seed(1)
 from tensorflow import set_random_seed
 
 set_random_seed(2)
+#####
 
+from keras.layers import Input, Dense, LSTM, CuDNNLSTM, Activation, Dropout, TimeDistributed, Bidirectional
+from keras.models import Model
 from keras.models import Sequential
-from keras.layers import Dense, LSTM, CuDNNLSTM, Activation, Dropout, TimeDistributed, Bidirectional
 from keras.preprocessing import sequence
+from keras.utils import plot_model
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras_tools.attention_layers import Attention, AttentionWithContext
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 
 import copy
+import keras
 import numpy as np
 import os
 import pandas
@@ -21,7 +27,7 @@ import pandas
 
 # define baseline model
 def baseline_model(timesteps, data_dim, output, dropout=None, return_sequences=False, gpu=True):
-    # expected input data shape: (batch_size, timesteps, data_dim)
+    # expected input_data data shape: (batch_size, timesteps, data_dim)
     # create model
     # def prepare_model(timesteps, data_dim, num_classes):
     model = Sequential()
@@ -48,7 +54,7 @@ def baseline_model(timesteps, data_dim, output, dropout=None, return_sequences=F
 
 # define baseline model
 def baseline_model_wrapped(timesteps, data_dim, output, dropout=None, return_sequences=False, gpu=True):
-    # expected input data shape: (batch_size, timesteps, data_dim)
+    # expected input_data data shape: (batch_size, timesteps, data_dim)
     # create model
     def prepare_model(timesteps, data_dim, output, dropout, return_sequences, gpu):
         model = Sequential()
@@ -74,25 +80,25 @@ def baseline_model_wrapped(timesteps, data_dim, output, dropout=None, return_seq
     return prepare_model(timesteps, data_dim, output, dropout, return_sequences, gpu)
 
 
-def basic_binary_lstm(input):
+def basic_binary_lstm(input_data):
     # Input can be either a folder containing csv files or a .npy file
-    if input.endswith(".npy"):
-        loaded_array = np.load(input)
+    if input_data.endswith(".npy"):
+        loaded_array = np.load(input_data)
         X = loaded_array[0]
         Y = loaded_array[1]
     else:
-        classes = sorted([f for f in os.listdir(input)
-                          if os.path.isdir(os.path.join(input, f)) and not f.startswith('.')],
+        classes = sorted([f for f in os.listdir(input_data)
+                          if os.path.isdir(os.path.join(input_data, f)) and not f.startswith('.')],
                          key=lambda f: f.lower())
         X = []
         Y = []
         sequence_lengths = []
         for class_name in classes:
-            files = sorted([f for f in os.listdir(os.path.join(input, class_name))
-                            if os.path.isfile(os.path.join(input, class_name, f)) and not f.startswith('.')
+            files = sorted([f for f in os.listdir(os.path.join(input_data, class_name))
+                            if os.path.isfile(os.path.join(input_data, class_name, f)) and not f.startswith('.')
                             and f.endswith(".csv")], key=lambda f: f.lower())
             for file in files:
-                df = pandas.read_csv(os.path.join(input, class_name, file))
+                df = pandas.read_csv(os.path.join(input_data, class_name, file))
                 values = df.values
                 nan_inds = np.where(np.isnan(values))
                 values[nan_inds] = 0
@@ -133,25 +139,25 @@ def basic_binary_lstm(input):
     a = 0
 
 
-def basic_binary_lstm_cv(input):
+def basic_binary_lstm_cv(input_data):
     # Input can be either a folder containing csv files or a .npy file
-    if input.endswith(".npy"):
-        loaded_array = np.load(input)
+    if input_data.endswith(".npy"):
+        loaded_array = np.load(input_data)
         X = loaded_array[0]
         Y = loaded_array[1]
     else:
-        classes = sorted([f for f in os.listdir(input)
-                          if os.path.isdir(os.path.join(input, f)) and not f.startswith('.')],
+        classes = sorted([f for f in os.listdir(input_data)
+                          if os.path.isdir(os.path.join(input_data, f)) and not f.startswith('.')],
                          key=lambda f: f.lower())
         X = []
         Y = []
         sequence_lengths = []
         for class_name in classes:
-            files = sorted([f for f in os.listdir(os.path.join(input, class_name))
-                            if os.path.isfile(os.path.join(input, class_name, f)) and not f.startswith('.')
+            files = sorted([f for f in os.listdir(os.path.join(input_data, class_name))
+                            if os.path.isfile(os.path.join(input_data, class_name, f)) and not f.startswith('.')
                             and f.endswith(".csv")], key=lambda f: f.lower())
             for file in files:
-                df = pandas.read_csv(os.path.join(input, class_name, file))
+                df = pandas.read_csv(os.path.join(input_data, class_name, file))
                 values = df.values
                 nan_inds = np.where(np.isnan(values))
                 values[nan_inds] = 0
@@ -198,7 +204,7 @@ def basic_binary_lstm_cv(input):
 
 
 def create_basic_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
-    # expected input data shape: (batch_size, timesteps, data_dim)
+    # expected input_data data shape: (batch_size, timesteps, data_dim)
     # create model
     model = Sequential()
     if gpu:
@@ -215,7 +221,7 @@ def create_basic_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gp
 
 
 def create_basic_lstm_double_dense(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
-    # expected input data shape: (batch_size, timesteps, data_dim)
+    # expected input_data data shape: (batch_size, timesteps, data_dim)
     # create model
     model = Sequential()
     if gpu:
@@ -244,7 +250,7 @@ def create_model():
 
 
 def create_attention_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
-    # expected input data shape: (batch_size, timesteps, data_dim)
+    # expected input_data data shape: (batch_size, timesteps, data_dim)
     # create model
     model = Sequential()
     if gpu:
@@ -264,7 +270,7 @@ def create_attention_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None
 
 
 def create_attention_context_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
-    # expected input data shape: (batch_size, timesteps, data_dim)
+    # expected input_data data shape: (batch_size, timesteps, data_dim)
     # create model
     model = Sequential()
     if gpu:
@@ -283,25 +289,249 @@ def create_attention_context_lstm(hu=20, timesteps=1, data_dim=1, output=1, drop
     return model
 
 
-def dense_binary_lstm(input):
+def create_multidata_basic_lstm(input_shape, hu=20, output=1, dropout=None, gpu=True):
+    # expected input_data data shape: (num_streams, timesteps, data_dim)
+    seq_shape = (input_shape[1], input_shape[2])
+    n = input_shape[0]
+
+    # Define n input_data sequences
+    seq = []
+    for i in range(n):
+        seq_i = Input(seq_shape)
+        seq.append(seq_i)
+    cat = keras.layers.concatenate(seq, axis=-1)
+    # Create model
+    if gpu:
+        lstm = CuDNNLSTM(hu, input_shape=(input_shape[1], input_shape[0]*input_shape[2]))(cat)
+    else:
+        lstm = LSTM(hu, input_shape=(input_shape[1], input_shape[0]*input_shape[2]))(cat)
+    if dropout is float:
+        lstm = Dropout(dropout)(lstm)
+    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(lstm)
+    model = Model(seq, dense)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model
+
+
+def create_multidata_basic_lstm_double_dense(input_shape, hu=20, output=1, dropout=None, gpu=True):
+    # expected input_data data shape: (num_streams, timesteps, data_dim)
+    seq_shape = (input_shape[1], input_shape[2])
+    n = input_shape[0]
+
+    # Define n input_data sequences
+    seq = []
+    for i in range(n):
+        seq_i = Input(seq_shape)
+        seq.append(seq_i)
+    cat = keras.layers.concatenate(seq, axis=-1)
+    # Create model
+    if gpu:
+        lstm = CuDNNLSTM(hu, input_shape=(input_shape[1], input_shape[0] * input_shape[2]))(cat)
+    else:
+        lstm = LSTM(hu, input_shape=(input_shape[1], input_shape[0] * input_shape[2]))(cat)
+    if dropout is float:
+        lstm = Dropout(dropout)(lstm)
+    dense_1 = Dense(int(hu/2))(lstm)
+    dense_2 = Dense(output, kernel_initializer="normal", activation="sigmoid")(dense_1)
+    model = Model(seq, dense_2)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model
+
+
+def create_multidata_attention_lstm(input_shape, hu=20, output=1, dropout=None, gpu=True):
+    # expected input_data data shape: (num_streams, timesteps, data_dim)
+    seq_shape = (input_shape[1], input_shape[2])
+    n = input_shape[0]
+
+    # Define n input_data sequences
+    seq = []
+    for i in range(n):
+        seq_i = Input(seq_shape)
+        seq.append(seq_i)
+    cat = keras.layers.concatenate(seq, axis=-1)
+    # Create model
+    if gpu:
+        lstm = CuDNNLSTM(hu, input_shape=(input_shape[1], input_shape[0] * input_shape[2]), return_sequences=True)(cat)
+    else:
+        lstm = LSTM(hu, input_shape=(input_shape[1], input_shape[0] * input_shape[2]), return_sequences=True)(cat)
+    if dropout is float:
+        lstm = Dropout(dropout)(lstm)
+    result, attention = Attention(return_attention=True)(lstm)
+    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(result)
+    model = Model(seq, dense)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model
+
+
+def create_multidata_attention_context_lstm(input_shape, hu=20, output=1, dropout=None, gpu=True):
+    # expected input_data data shape: (num_streams, timesteps, data_dim)
+    seq_shape = (input_shape[1], input_shape[2])
+    n = input_shape[0]
+
+    # Define n input_data sequences
+    seq = []
+    for i in range(n):
+        seq_i = Input(seq_shape)
+        seq.append(seq_i)
+    cat = keras.layers.concatenate(seq, axis=-1)
+    # Create model
+    if gpu:
+        lstm = CuDNNLSTM(hu, input_shape=(input_shape[1], input_shape[0] * input_shape[2]), return_sequences=True)(cat)
+    else:
+        lstm = LSTM(hu, input_shape=(input_shape[1], input_shape[0] * input_shape[2]), return_sequences=True)(cat)
+    if dropout is float:
+        lstm = Dropout(dropout)(lstm)
+    result, attention = AttentionWithContext(return_attention=True)(lstm)
+    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(result)
+    model = Model(seq, dense)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model
+
+
+def create_multistream_basic_lstm(input_shape, hu=20, output=1, dropout=None, gpu=True):
+    # expected input_data data shape: (num_streams, timesteps, data_dim)
+    seq_shape = (input_shape[1], input_shape[2])
+    n = input_shape[0]
+
+    # Create a LSTM for each stream
+    seq = []
+    lstms = []
+    for i in range(n):
+        input_data = Input(seq_shape)
+        if gpu:
+            lstm = CuDNNLSTM(hu, input_shape=(input_shape[1], input_shape[0] * input_shape[2]))(input_data)
+        else:
+            lstm = LSTM(hu, input_shape=(input_shape[1], input_shape[0] * input_shape[2]))(input_data)
+        if dropout is float:
+            lstm = Dropout(dropout)(lstm)
+        seq.append(input_data)
+        lstms.append(lstm)
+    # Concatenate independent streams
+    cat = keras.layers.concatenate(lstms, axis=-1)
+    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(cat)
+    model = Model(seq, dense)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model
+
+
+def create_multistream_basic_lstm_double_dense(input_shape, hu=20, output=1, dropout=None, gpu=True):
+    # expected input_data data shape: (num_streams, timesteps, data_dim)
+    seq_shape = (input_shape[1], input_shape[2])
+    n = input_shape[0]
+
+    # Create a LSTM for each stream
+    seq = []
+    lstms = []
+    for i in range(n):
+        input_data = Input(seq_shape)
+        if gpu:
+            lstm = CuDNNLSTM(hu, input_shape=(input_shape[1], input_shape[0] * input_shape[2]))(input_data)
+        else:
+            lstm = LSTM(hu, input_shape=(input_shape[1], input_shape[0] * input_shape[2]))(input_data)
+        if dropout is float:
+            lstm = Dropout(dropout)(lstm)
+        seq.append(input_data)
+        lstms.append(lstm)
+    # Concatenate independent streams
+    cat = keras.layers.concatenate(lstms, axis=-1)
+    dense_1 = Dense(int(hu / 2))(cat)
+    dense_2 = Dense(output, kernel_initializer="normal", activation="sigmoid")(dense_1)
+    model = Model(seq, dense_2)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model
+
+
+def create_multistream_attention_lstm(input_shape, hu=20, output=1, dropout=None, gpu=True):
+    # expected input_data data shape: (num_streams, timesteps, data_dim)
+    seq_shape = (input_shape[1], input_shape[2])
+    n = input_shape[0]
+
+    # Create a LSTM for each stream
+    seq = []
+    lstms = []
+    for i in range(n):
+        input_data = Input(seq_shape)
+        if gpu:
+            lstm = CuDNNLSTM(hu, input_shape=(input_shape[1], input_shape[0] * input_shape[2]), return_sequences=True)(input_data)
+        else:
+            lstm = LSTM(hu, input_shape=(input_shape[1], input_shape[0] * input_shape[2]), return_sequences=True)(input_data)
+        if dropout is float:
+            lstm = Dropout(dropout)(lstm)
+        # Add attention in each stream
+        result, attention = Attention(return_attention=True)(lstm)
+        seq.append(input_data)
+        lstms.append(result)
+    # Concatenate independent streams
+    cat = keras.layers.concatenate(lstms, axis=-1)
+    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(cat)
+    model = Model(seq, dense)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model
+
+
+def create_multistream_attention_context_lstm(input_shape, hu=20, output=1, dropout=None, gpu=True):
+    # expected input_data data shape: (num_streams, timesteps, data_dim)
+    seq_shape = (input_shape[1], input_shape[2])
+    n = input_shape[0]
+
+    # Create a LSTM for each stream
+    seq = []
+    lstms = []
+    for i in range(n):
+        input_data = Input(seq_shape)
+        if gpu:
+            lstm = CuDNNLSTM(hu, input_shape=(input_shape[1], input_shape[0] * input_shape[2]), return_sequences=True)(input_data)
+        else:
+            lstm = LSTM(hu, input_shape=(input_shape[1], input_shape[0] * input_shape[2]), return_sequences=True)(input_data)
+        if dropout is float:
+            lstm = Dropout(dropout)(lstm)
+        # Add attention in each stream
+        result, attention = AttentionWithContext(return_attention=True)(lstm)
+        seq.append(input_data)
+        lstms.append(result)
+    # Concatenate independent streams
+    cat = keras.layers.concatenate(lstms, axis=-1)
+    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(cat)
+    model = Model(seq, dense)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model
+
+
+def dense_binary_lstm(input_data):
     # Input can be either a folder containing csv files or a .npy file
-    if input.endswith(".npy"):
-        loaded_array = np.load(input)
+    if input_data.endswith(".npy"):
+        loaded_array = np.load(input_data)
         X = loaded_array[0]
         Y = loaded_array[1]
     else:
-        classes = sorted([f for f in os.listdir(input)
-                          if os.path.isdir(os.path.join(input, f)) and not f.startswith('.')],
+        classes = sorted([f for f in os.listdir(input_data)
+                          if os.path.isdir(os.path.join(input_data, f)) and not f.startswith('.')],
                          key=lambda f: f.lower())
         X = []
         Y = []
         sequence_lengths = []
         for class_name in classes:
-            files = sorted([f for f in os.listdir(os.path.join(input, class_name))
-                            if os.path.isfile(os.path.join(input, class_name, f)) and not f.startswith('.')
+            files = sorted([f for f in os.listdir(os.path.join(input_data, class_name))
+                            if os.path.isfile(os.path.join(input_data, class_name, f)) and not f.startswith('.')
                             and f.endswith(".csv")], key=lambda f: f.lower())
             for file in files:
-                df = pandas.read_csv(os.path.join(input, class_name, file))
+                df = pandas.read_csv(os.path.join(input_data, class_name, file))
                 X.append(df.values[:, 1:])
                 sequence_lengths.append(len(df.values))
                 Y.append(class_name)
@@ -330,19 +560,19 @@ def dense_binary_lstm(input):
     a = 0
 
 
-def get_data(input):
-    classes = sorted([f for f in os.listdir(input)
-                      if os.path.isdir(os.path.join(input, f)) and not f.startswith('.')],
+def get_data(input_data):
+    classes = sorted([f for f in os.listdir(input_data)
+                      if os.path.isdir(os.path.join(input_data, f)) and not f.startswith('.')],
                      key=lambda f: f.lower())
     X = []
     Y = []
     sequence_lengths = []
     for class_name in classes:
-        files = sorted([f for f in os.listdir(os.path.join(input, class_name))
-                        if os.path.isfile(os.path.join(input, class_name, f)) and not f.startswith('.')
+        files = sorted([f for f in os.listdir(os.path.join(input_data, class_name))
+                        if os.path.isfile(os.path.join(input_data, class_name, f)) and not f.startswith('.')
                         and f.endswith(".csv")], key=lambda f: f.lower())
         for file in files:
-            df = pandas.read_csv(os.path.join(input, class_name, file))
+            df = pandas.read_csv(os.path.join(input_data, class_name, file))
             values = df.values
             nan_inds = np.where(np.isnan(values))
             values[nan_inds] = 0
@@ -393,14 +623,14 @@ def test(gpu=False):
     plt.show()
 
 
-def stacked_h_binary_lstm(input):
+def stacked_h_binary_lstm(input_data):
     # Input can be either a folder containing csv files or a .npy file
-    if input.endswith(".npy"):
-        loaded_array = np.load(input)
+    if input_data.endswith(".npy"):
+        loaded_array = np.load(input_data)
         X = loaded_array[0]
         Y = loaded_array[1]
     else:
-        X, Y = get_data(input)
+        X, Y = get_data(input_data)
 
     seed = 8
 
@@ -411,14 +641,14 @@ def stacked_h_binary_lstm(input):
     print("Result: %.2f%% (%.2f%%)" % (results.mean() * 100, results.std() * 100))
 
 
-def standard_vs_binary(input, cv=10):
+def standard_vs_binary(input_data, cv=10):
     # Input can be either a folder containing csv files or a .npy file
-    if input.endswith(".npy"):
-        loaded_array = np.load(input)
+    if input_data.endswith(".npy"):
+        loaded_array = np.load(input_data)
         X = loaded_array[0]
         Y = loaded_array[1]
     else:
-        X, Y = get_data(input)
+        X, Y = get_data(input_data)
 
     seed = 8
 
@@ -443,12 +673,12 @@ def standard_vs_binary(input, cv=10):
         folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=seed)
     else:
         folds = cv
-    results_basic = cross_val_score(classifier_basic, X, Y, cv=folds, verbose=1)  # , n_jobs=-1)
+    results_basic = cross_val_score(classifier_basic, X, Y, cv=folds, verbose=1)
     results_double_dense = cross_val_score(classifier_double_dense, X, Y, cv=folds, verbose=1)  # , n_jobs=-1)
     results_attention = cross_val_score(classifier_attention, X, Y, cv=folds, verbose=1)  # , n_jobs=-1)
     results_attention_context = cross_val_score(classifier_attention_context, X, Y, cv=folds, verbose=1)  # , n_jobs=-1)
-    print("Database: %s" % os.path.split(input)[-2])
-    print("Data: %s" % os.path.split(input)[-1])
+    print("Database: %s" % os.path.split(input_data)[-2])
+    print("Data: %s" % os.path.split(input_data)[-1])
     print("Hidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s" % (hu, epochs, batch_size, dropout))
     print("Result basic: %.2f%% (%.2f%%)" % (results_basic.mean() * 100, results_basic.std() * 100))
     print("Result double dense: %.2f%% (%.2f%%)" % (results_double_dense.mean() * 100, results_basic.std() * 100))
@@ -456,12 +686,182 @@ def standard_vs_binary(input, cv=10):
     print("Result attention with context: %.2f%% (%.2f%%)" % (
         results_attention_context.mean() * 100, results_attention_context.std() * 100))
 
-    with open(os.path.join(os.path.split(input)[-2], "keras_results.txt"), "w+") as output:
-        output.write("Database: %s\n" % os.path.split(input)[-2])
-        output.write("Data: %s" % os.path.split(input)[-1])
+    with open(os.path.join(os.path.split(input_data)[-2], "keras_results_%s.txt" % os.path.split(input_data)[-1]), "w+") as output:
+        output.write("Database: %s\n" % os.path.split(input_data)[-2])
+        output.write("Data: %s\n" % os.path.split(input_data)[-1])
         output.write("Hidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s\n" % (hu, epochs, batch_size, dropout))
         output.write("Result basic: %.2f%% (%.2f%%)\n" % (results_basic.mean() * 100, results_basic.std() * 100))
         output.write("Result double dense: %.2f%% (%.2f%%)\n" % (results_double_dense.mean() * 100, results_basic.std() * 100))
         output.write("Result attention: %.2f%% (%.2f%%)\n" % (results_attention.mean() * 100, results_attention.std() * 100))
         output.write("Result attention with context: %.2f%% (%.2f%%)\n" % (
+            results_attention_context.mean() * 100, results_attention_context.std() * 100))
+
+
+def modalities(inputs, cv=10):
+    # Input can be either a folder containing csv files or a .npy file
+    if inputs.endswith(".npy"):
+        loaded_array = np.load(inputs)
+        X = loaded_array[0]
+        Y = loaded_array[1]
+    else:
+        X = []
+        Y = []
+        for stream_idx in range(len(inputs)):
+            X_idx, Y_idx = get_data(inputs[stream_idx])
+            X.append(X_idx)
+            Y.append(Y_idx)
+
+    hu = 200
+    dropout = None
+    epochs = 100
+    batch_size = 32
+    gpu = True
+    input_shape = (len(X), X[0].shape[1], X[0].shape[2])
+    if cv is int:
+        folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
+    else:
+        folds = cv
+
+    for stream_idx in range(len(inputs)):
+        classifier_basic = KerasClassifier(build_fn=create_basic_lstm, hu=hu, timesteps=X[stream_idx].shape[1], data_dim=X[stream_idx].shape[2],
+                                           output=1,
+                                           dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size, verbose=2)
+        classifier_double_dense = KerasClassifier(build_fn=create_basic_lstm, hu=hu, timesteps=X[stream_idx].shape[1],
+                                                  data_dim=X[stream_idx].shape[2],
+                                                  output=1,
+                                                  dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size,
+                                                  verbose=2)
+        classifier_attention = KerasClassifier(build_fn=create_attention_lstm, hu=hu, timesteps=X[stream_idx].shape[1],
+                                               data_dim=X[stream_idx].shape[2],
+                                               output=1,
+                                               dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size,
+                                               verbose=2)
+        classifier_attention_context = KerasClassifier(build_fn=create_attention_context_lstm, hu=hu,
+                                                       timesteps=X[stream_idx].shape[1],
+                                                       data_dim=X[stream_idx].shape[2],
+                                                       output=1,
+                                                       dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size,
+                                                       verbose=2)
+
+        results_basic = cross_val_score(classifier_basic, X[stream_idx], Y[stream_idx], scoring="roc_auc", cv=folds, verbose=1)  # , n_jobs=-1)
+        results_double_dense = cross_val_score(classifier_double_dense, X[stream_idx], Y[stream_idx], scoring="roc_auc", cv=folds, verbose=1)  # , n_jobs=-1)
+        results_attention = cross_val_score(classifier_attention, X[stream_idx], Y[stream_idx], scoring="roc_auc", cv=folds, verbose=1)  # , n_jobs=-1)
+        results_attention_context = cross_val_score(classifier_attention_context, X[stream_idx], Y[stream_idx], scoring="roc_auc", cv=folds, verbose=1)  # , n_jobs=-1)
+        print("Database: %s" % os.path.split(inputs[stream_idx])[-2])
+        print("Data: %s" % os.path.split(inputs[stream_idx])[-1])
+        print("Hidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s" % (hu, epochs, batch_size, dropout))
+        print("Result basic: %.2f%% (%.2f%%)" % (results_basic.mean() * 100, results_basic.std() * 100))
+        print("Result double dense: %.2f%% (%.2f%%)" % (results_double_dense.mean() * 100, results_basic.std() * 100))
+        print("Result attention: %.2f%% (%.2f%%)" % (results_attention.mean() * 100, results_attention.std() * 100))
+        print("Result attention with context: %.2f%% (%.2f%%)" % (
+            results_attention_context.mean() * 100, results_attention_context.std() * 100))
+
+        with open(os.path.join(os.path.split(inputs[stream_idx])[-2], "keras_results_modalities.txt"), "a+") as output:
+            output.write("Database: %s\n" % os.path.split(inputs[stream_idx])[-2])
+            output.write("Data: %s\n" % os.path.split(inputs[stream_idx])[-1])
+            output.write("Hidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s\n" % (hu, epochs, batch_size, dropout))
+            output.write("Result basic: %.2f%% (%.2f%%)\n" % (results_basic.mean() * 100, results_basic.std() * 100))
+            output.write("Result double dense: %.2f%% (%.2f%%)\n" % (results_double_dense.mean() * 100, results_basic.std() * 100))
+            output.write("Result attention: %.2f%% (%.2f%%)\n" % (results_attention.mean() * 100, results_attention.std() * 100))
+            output.write("Result attention with context: %.2f%% (%.2f%%)\n\n" % (
+                results_attention_context.mean() * 100, results_attention_context.std() * 100))
+
+    # Multidata
+    classifier_basic = KerasClassifier(build_fn=create_multidata_basic_lstm, hu=hu, input_shape=input_shape,
+                                       output=1,
+                                       dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size, verbose=2)
+    classifier_double_dense = KerasClassifier(build_fn=create_multidata_basic_lstm, hu=hu, input_shape=input_shape,
+                                              output=1,
+                                              dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size,
+                                              verbose=2)
+    classifier_attention = KerasClassifier(build_fn=create_multidata_attention_lstm, hu=hu, input_shape=input_shape,
+                                           output=1,
+                                           dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size,
+                                           verbose=2)
+    classifier_attention_context = KerasClassifier(build_fn=create_multidata_attention_context_lstm, hu=hu,
+                                                   input_shape=input_shape,
+                                                   output=1,
+                                                   dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size,
+                                                   verbose=2)
+
+    results_basic = cross_val_score(classifier_basic, X, Y[0], scoring="roc_auc", cv=folds, verbose=1)  # , n_jobs=-1)
+    results_double_dense = cross_val_score(classifier_double_dense, X, Y[0], scoring="roc_auc", cv=folds,
+                                           verbose=1)  # , n_jobs=-1)
+    results_attention = cross_val_score(classifier_attention, X, Y[0], scoring="roc_auc", cv=folds,
+                                        verbose=1)  # , n_jobs=-1)
+    results_attention_context = cross_val_score(classifier_attention_context, X, Y[0], scoring="roc_auc", cv=folds,
+                                                verbose=1)  # , n_jobs=-1)
+    print("Database: %s" % os.path.split(inputs[0])[-2])
+    print("Data: %s" % " + ".join([os.path.split(input_data)[-1] for input_data in inputs]))
+    print("Hidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s" % (hu, epochs, batch_size, dropout))
+    print("Result early fusion basic: %.2f%% (%.2f%%)" % (results_basic.mean() * 100, results_basic.std() * 100))
+    print("Result early fusion double dense: %.2f%% (%.2f%%)" % (results_double_dense.mean() * 100, results_basic.std() * 100))
+    print("Result early fusion attention: %.2f%% (%.2f%%)" % (results_attention.mean() * 100, results_attention.std() * 100))
+    print("Result early fusion attention with context: %.2f%% (%.2f%%)" % (
+        results_attention_context.mean() * 100, results_attention_context.std() * 100))
+
+    with open(os.path.join(os.path.split(inputs[0])[-2], "keras_results_modalities.txt"), "a+") as output:
+        output.write("Database: %s\n" % os.path.split(inputs[0])[-2])
+        output.write("Data: %s\n" % " + ".join([os.path.split(input_data)[-1] for input_data in inputs]))
+        output.write("Hidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s\n" % (hu, epochs, batch_size, dropout))
+        output.write("Result early fusion basic: %.2f%% (%.2f%%)\n" % (results_basic.mean() * 100, results_basic.std() * 100))
+        output.write(
+            "Result early fusion double dense: %.2f%% (%.2f%%)\n" % (results_double_dense.mean() * 100, results_basic.std() * 100))
+        output.write(
+            "Result early fusion attention: %.2f%% (%.2f%%)\n" % (results_attention.mean() * 100, results_attention.std() * 100))
+        output.write("Result early fusion attention with context: %.2f%% (%.2f%%)\n" % (
+            results_attention_context.mean() * 100, results_attention_context.std() * 100))
+
+    # Multistream
+    classifier_basic = KerasClassifier(build_fn=create_multistream_basic_lstm, hu=hu, input_shape=input_shape,
+                                       output=1,
+                                       dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size, verbose=2)
+    classifier_double_dense = KerasClassifier(build_fn=create_multistream_basic_lstm, hu=hu, input_shape=input_shape,
+                                              output=1,
+                                              dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size,
+                                              verbose=2)
+    classifier_attention = KerasClassifier(build_fn=create_multistream_attention_lstm, hu=hu, input_shape=input_shape,
+                                           output=1,
+                                           dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size,
+                                           verbose=2)
+    classifier_attention_context = KerasClassifier(build_fn=create_multistream_attention_context_lstm, hu=hu,
+                                                   input_shape=input_shape,
+                                                   output=1,
+                                                   dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size,
+                                                   verbose=2)
+
+    results_basic = cross_val_score(classifier_basic, X, Y[0], scoring="roc_auc", cv=folds,
+                                    verbose=1)  # , n_jobs=-1)
+    results_double_dense = cross_val_score(classifier_double_dense, X, Y[0], scoring="roc_auc",
+                                           cv=folds,
+                                           verbose=1)  # , n_jobs=-1)
+    results_attention = cross_val_score(classifier_attention, X, Y[0], scoring="roc_auc", cv=folds,
+                                        verbose=1)  # , n_jobs=-1)
+    results_attention_context = cross_val_score(classifier_attention_context, X, Y[0],
+                                                scoring="roc_auc", cv=folds,
+                                                verbose=1)  # , n_jobs=-1)
+    print("Database: %s" % os.path.split(inputs[0])[-2])
+    print("Data: %s" % " + ".join([os.path.split(input_data)[-1] for input_data in inputs]))
+    print("Hidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s" % (hu, epochs, batch_size, dropout))
+    print("Result middle fusion basic: %.2f%% (%.2f%%)" % (results_basic.mean() * 100, results_basic.std() * 100))
+    print("Result middle fusion double dense: %.2f%% (%.2f%%)" % (
+    results_double_dense.mean() * 100, results_basic.std() * 100))
+    print("Result middle fusion attention: %.2f%% (%.2f%%)" % (
+    results_attention.mean() * 100, results_attention.std() * 100))
+    print("Result middle fusion attention with context: %.2f%% (%.2f%%)" % (
+        results_attention_context.mean() * 100, results_attention_context.std() * 100))
+
+    with open(os.path.join(os.path.split(inputs[0])[-2], "keras_results_modalities.txt"), "a+") as output:
+        output.write("Database: %s\n" % os.path.split(inputs[0])[-2])
+        output.write("Data: %s\n" % " + ".join([os.path.split(input_data)[-1] for input_data in inputs]))
+        output.write("Hidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s\n" % (hu, epochs, batch_size, dropout))
+        output.write(
+            "Result middle fusion basic: %.2f%% (%.2f%%)\n" % (results_basic.mean() * 100, results_basic.std() * 100))
+        output.write(
+            "Result middle fusion double dense: %.2f%% (%.2f%%)\n" % (
+            results_double_dense.mean() * 100, results_basic.std() * 100))
+        output.write(
+            "Result middle fusion attention: %.2f%% (%.2f%%)\n" % (
+            results_attention.mean() * 100, results_attention.std() * 100))
+        output.write("Result middle fusion attention with context: %.2f%% (%.2f%%)\n" % (
             results_attention_context.mean() * 100, results_attention_context.std() * 100))

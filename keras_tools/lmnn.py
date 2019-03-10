@@ -45,6 +45,7 @@ def get_triplets(X, Y):
 def create_multistream_model(X, rnn_generator, **kwargs):
 
     # Inspired from: https://github.com/keras-team/keras/issues/10333
+    # Another reference: https://www.pyimagesearch.com/2019/02/04/keras-multiple-inputs-and-mixed-data/
     seq_shape = (X.shape[2], X.shape[3])
     n = X.shape[1]
     # Define a shared model
@@ -69,4 +70,4 @@ def create_multistream_model(X, rnn_generator, **kwargs):
     Y = np.zeros((X.shape[0], model.layers[-1].output_shape))
 
     # from keras.utils import plot_model
-    # plot_model(m, to_file='model.png')
+    # plot_model(model, to_file='model.png', show_shapes=True, show_layer_names=False)
