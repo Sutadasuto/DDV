@@ -81,7 +81,7 @@ def baseline_model_wrapped(timesteps, data_dim, output, dropout=None, return_seq
     return prepare_model(timesteps, data_dim, output, dropout, return_sequences, gpu)
 
 
-def basic_binary_lstm(input_data):
+def basic_binary_blstm(input_data):
     # Input can be either a folder containing csv files or a .npy file
     if input_data.endswith(".npy"):
         loaded_array = np.load(input_data)
@@ -140,7 +140,7 @@ def basic_binary_lstm(input_data):
     a = 0
 
 
-def basic_binary_lstm_cv(input_data):
+def basic_binary_blstm_cv(input_data):
     # Input can be either a folder containing csv files or a .npy file
     if input_data.endswith(".npy"):
         loaded_array = np.load(input_data)
@@ -181,7 +181,7 @@ def basic_binary_lstm_cv(input_data):
 
     seed = 8
 
-    classifier = KerasClassifier(build_fn=create_basic_lstm, timesteps=X.shape[1], data_dim=X.shape[2], output=1,
+    classifier = KerasClassifier(build_fn=create_basic_blstm, timesteps=X.shape[1], data_dim=X.shape[2], output=1,
                                  dropout=None, gpu=False, epochs=50, batch_size=8, verbose=1)
     folds = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
     results = cross_val_score(classifier, X, Y, cv=folds, verbose=1)
@@ -204,14 +204,14 @@ def basic_binary_lstm_cv(input_data):
     # a = 0
 
 
-def create_basic_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
+def create_basic_blstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
     # expected input_data data shape: (batch_size, timesteps, data_dim)
     # create model
     model = Sequential()
     if gpu:
-        model.add(CuDNNLSTM(hu, input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
+        model.add(Bidirectional(CuDNNLSTM(hu), input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
     else:
-        model.add(LSTM(hu, input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
+        model.add(Bidirectional(LSTM(hu), input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
     if dropout is float:
         model.add(Dropout(dropout))
     model.add(Dense(output, kernel_initializer="normal", activation="sigmoid"))
@@ -221,14 +221,14 @@ def create_basic_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gp
     return model
 
 
-def create_basic_lstm_double_dense(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
+def create_basic_blstm_double_dense(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
     # expected input_data data shape: (batch_size, timesteps, data_dim)
     # create model
     model = Sequential()
     if gpu:
-        model.add(CuDNNLSTM(hu, input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
+        model.add(Bidirectional(CuDNNLSTM(hu), input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
     else:
-        model.add(LSTM(hu, input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
+        model.add(Bidirectional(LSTM(hu), input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
     if dropout is float:
         model.add(Dropout(dropout))
     model.add(Dense(int(hu/2)))
@@ -250,16 +250,16 @@ def create_model():
     return model
 
 
-def create_attention_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
+def create_attention_blstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
     # expected input_data data shape: (batch_size, timesteps, data_dim)
     # create model
     model = Sequential()
     if gpu:
-        model.add(CuDNNLSTM(hu, input_shape=(timesteps, data_dim),
-                            return_sequences=True))  # returns a sequence of vectors of dimension 32
+        model.add(Bidirectional(CuDNNLSTM(hu,
+                            return_sequences=True), input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
     else:
-        model.add(LSTM(hu, input_shape=(timesteps, data_dim),
-                       return_sequences=True))  # returns a sequence of vectors of dimension 32
+        model.add(Bidirectional(LSTM(hu,
+                       return_sequences=True), input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
     if dropout is float:
         model.add(Dropout(dropout))
     model.add(Attention())
@@ -270,16 +270,16 @@ def create_attention_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None
     return model
 
 
-def create_attention_context_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
+def create_attention_context_blstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
     # expected input_data data shape: (batch_size, timesteps, data_dim)
     # create model
     model = Sequential()
     if gpu:
-        model.add(CuDNNLSTM(hu, input_shape=(timesteps, data_dim),
-                            return_sequences=True))  # returns a sequence of vectors of dimension 32
+        model.add(Bidirectional(CuDNNLSTM(hu,
+                            return_sequences=True), input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
     else:
-        model.add(LSTM(hu, input_shape=(timesteps, data_dim),
-                       return_sequences=True))  # returns a sequence of vectors of dimension 32
+        model.add(Bidirectional(LSTM(hu,
+                       return_sequences=True), input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
     if dropout is float:
         model.add(Dropout(dropout))
     model.add(AttentionWithContext())
@@ -290,7 +290,7 @@ def create_attention_context_lstm(hu=20, timesteps=1, data_dim=1, output=1, drop
     return model
 
 
-def create_multidata_basic_lstm(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+def create_multidata_basic_blstm(input_shapes, hu=20, output=1, dropout=None, gpu=True):
     # expected input_data data shape: (timesteps, data_dim)
     seq_shape = []
     for shape in input_shapes:
@@ -305,12 +305,12 @@ def create_multidata_basic_lstm(input_shapes, hu=20, output=1, dropout=None, gpu
     cat = keras.layers.concatenate(seq, axis=-1)
     # Create model
     if gpu:
-        lstm = CuDNNLSTM(hu, input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]))(cat)
+        blstm = Bidirectional(CuDNNLSTM(hu), input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]))(cat)
     else:
-        lstm = LSTM(hu, input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]))(cat)
+        blstm = Bidirectional(LSTM(hu), input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]))(cat)
     if dropout is float:
-        lstm = Dropout(dropout)(lstm)
-    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(lstm)
+        blstm = Dropout(dropout)(blstm)
+    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(blstm)
     model = Model(seq, dense)
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
@@ -318,7 +318,7 @@ def create_multidata_basic_lstm(input_shapes, hu=20, output=1, dropout=None, gpu
     return model
 
 
-def create_multidata_basic_lstm_double_dense(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+def create_multidata_basic_blstm_double_dense(input_shapes, hu=20, output=1, dropout=None, gpu=True):
     # expected input_data data shape: (timesteps, data_dim)
     seq_shape = []
     for shape in input_shapes:
@@ -333,12 +333,12 @@ def create_multidata_basic_lstm_double_dense(input_shapes, hu=20, output=1, drop
     cat = keras.layers.concatenate(seq, axis=-1)
     # Create model
     if gpu:
-        lstm = CuDNNLSTM(hu, input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]))(cat)
+        blstm = Bidirectional(CuDNNLSTM(hu), input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]))(cat)
     else:
-        lstm = LSTM(hu, input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]))(cat)
+        blstm = Bidirectional(LSTM(hu), input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]))(cat)
     if dropout is float:
-        lstm = Dropout(dropout)(lstm)
-    dense_1 = Dense(int(hu/2))(lstm)
+        blstm = Dropout(dropout)(blstm)
+    dense_1 = Dense(int(hu/2))(blstm)
     dense_2 = Dense(output, kernel_initializer="normal", activation="sigmoid")(dense_1)
     model = Model(seq, dense_2)
     model.compile(loss='binary_crossentropy',
@@ -347,7 +347,7 @@ def create_multidata_basic_lstm_double_dense(input_shapes, hu=20, output=1, drop
     return model
 
 
-def create_multidata_attention_lstm(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+def create_multidata_attention_blstm(input_shapes, hu=20, output=1, dropout=None, gpu=True):
     # expected input_data data shape: (num_streams, timesteps, data_dim)
     seq_shape = []
     for shape in input_shapes:
@@ -362,12 +362,12 @@ def create_multidata_attention_lstm(input_shapes, hu=20, output=1, dropout=None,
     cat = keras.layers.concatenate(seq, axis=-1)
     # Create model
     if gpu:
-        lstm = CuDNNLSTM(hu, input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]), return_sequences=True)(cat)
+        blstm = Bidirectional(CuDNNLSTM(hu, return_sequences=True), input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]))(cat)
     else:
-        lstm = LSTM(hu, input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]), return_sequences=True)(cat)
+        blstm = Bidirectional(LSTM(hu, return_sequences=True), input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]))(cat)
     if dropout is float:
-        lstm = Dropout(dropout)(lstm)
-    result, attention = Attention(return_attention=True)(lstm)
+        blstm = Dropout(dropout)(blstm)
+    result, attention = Attention(return_attention=True)(blstm)
     dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(result)
     model = Model(seq, dense)
     model.compile(loss='binary_crossentropy',
@@ -376,7 +376,7 @@ def create_multidata_attention_lstm(input_shapes, hu=20, output=1, dropout=None,
     return model
 
 
-def create_multidata_attention_context_lstm(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+def create_multidata_attention_context_blstm(input_shapes, hu=20, output=1, dropout=None, gpu=True):
     # expected input_data data shape: (num_streams, timesteps, data_dim)
     seq_shape = []
     for shape in input_shapes:
@@ -391,12 +391,12 @@ def create_multidata_attention_context_lstm(input_shapes, hu=20, output=1, dropo
     cat = keras.layers.concatenate(seq, axis=-1)
     # Create model
     if gpu:
-        lstm = CuDNNLSTM(hu, input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]), return_sequences=True)(cat)
+        blstm = Bidirectional(CuDNNLSTM(hu, return_sequences=True), input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]))(cat)
     else:
-        lstm = LSTM(hu, input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]), return_sequences=True)(cat)
+        blstm = Bidirectional(LSTM(hu, return_sequences=True), input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]))(cat)
     if dropout is float:
-        lstm = Dropout(dropout)(lstm)
-    result, attention = AttentionWithContext(return_attention=True)(lstm)
+        blstm = Dropout(dropout)(blstm)
+    result, attention = AttentionWithContext(return_attention=True)(blstm)
     dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(result)
     model = Model(seq, dense)
     model.compile(loss='binary_crossentropy',
@@ -405,7 +405,7 @@ def create_multidata_attention_context_lstm(input_shapes, hu=20, output=1, dropo
     return model
 
 
-def create_multistream_basic_lstm(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+def create_multistream_basic_blstm(input_shapes, hu=20, output=1, dropout=None, gpu=True):
     # expected input_data data shape: (num_streams, timesteps, data_dim)
     seq_shape = []
     for shape in input_shapes:
@@ -414,19 +414,19 @@ def create_multistream_basic_lstm(input_shapes, hu=20, output=1, dropout=None, g
 
     # Create a LSTM for each stream
     seq = []
-    lstms = []
+    blstms = []
     for i in range(n):
         input_data = Input(seq_shape[i])
         if gpu:
-            lstm = CuDNNLSTM(hu, input_shape=input_shapes[i])(input_data)
+            blstm = Bidirectional(CuDNNLSTM(hu), input_shape=input_shapes[i])(input_data)
         else:
-            lstm = LSTM(hu, input_shape=input_shapes[i])(input_data)
+            blstm = Bidirectional(LSTM(hu), input_shape=input_shapes[i])(input_data)
         if dropout is float:
-            lstm = Dropout(dropout)(lstm)
+            blstm = Dropout(dropout)(blstm)
         seq.append(input_data)
-        lstms.append(lstm)
+        blstms.append(blstm)
     # Concatenate independent streams
-    cat = keras.layers.concatenate(lstms, axis=-1)
+    cat = keras.layers.concatenate(blstms, axis=-1)
     dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(cat)
     model = Model(seq, dense)
     model.compile(loss='binary_crossentropy',
@@ -435,7 +435,7 @@ def create_multistream_basic_lstm(input_shapes, hu=20, output=1, dropout=None, g
     return model
 
 
-def create_multistream_basic_lstm_double_dense(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+def create_multistream_basic_blstm_double_dense(input_shapes, hu=20, output=1, dropout=None, gpu=True):
     # expected input_data data shape: (num_streams, timesteps, data_dim)
     seq_shape = []
     for shape in input_shapes:
@@ -444,19 +444,19 @@ def create_multistream_basic_lstm_double_dense(input_shapes, hu=20, output=1, dr
 
     # Create a LSTM for each stream
     seq = []
-    lstms = []
+    blstms = []
     for i in range(n):
         input_data = Input(seq_shape[i])
         if gpu:
-            lstm = CuDNNLSTM(hu, input_shape=input_shapes[i])(input_data)
+            blstm = Bidirectional(CuDNNLSTM(hu), input_shape=input_shapes[i])(input_data)
         else:
-            lstm = LSTM(hu, input_shape=input_shapes[i])(input_data)
+            blstm = Bidirectional(LSTM(hu), input_shape=input_shapes[i])(input_data)
         if dropout is float:
-            lstm = Dropout(dropout)(lstm)
+            blstm = Dropout(dropout)(blstm)
         seq.append(input_data)
-        lstms.append(lstm)
+        blstms.append(blstm)
     # Concatenate independent streams
-    cat = keras.layers.concatenate(lstms, axis=-1)
+    cat = keras.layers.concatenate(blstms, axis=-1)
     dense_1 = Dense(int(hu / 2))(cat)
     dense_2 = Dense(output, kernel_initializer="normal", activation="sigmoid")(dense_1)
     model = Model(seq, dense_2)
@@ -466,7 +466,7 @@ def create_multistream_basic_lstm_double_dense(input_shapes, hu=20, output=1, dr
     return model
 
 
-def create_multistream_attention_lstm(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+def create_multistream_attention_blstm(input_shapes, hu=20, output=1, dropout=None, gpu=True):
     # expected input_data data shape: (num_streams, timesteps, data_dim)
     seq_shape = []
     for shape in input_shapes:
@@ -475,21 +475,21 @@ def create_multistream_attention_lstm(input_shapes, hu=20, output=1, dropout=Non
 
     # Create a LSTM for each stream
     seq = []
-    lstms = []
+    blstms = []
     for i in range(n):
         input_data = Input(seq_shape[i])
         if gpu:
-            lstm = CuDNNLSTM(hu, input_shape=input_shapes[i], return_sequences=True)(input_data)
+            blstm = Bidirectional(CuDNNLSTM(hu, return_sequences=True), input_shape=input_shapes[i])(input_data)
         else:
-            lstm = LSTM(hu, input_shape=input_shapes[i], return_sequences=True)(input_data)
+            blstm = Bidirectional(LSTM(hu, return_sequences=True), input_shape=input_shapes[i])(input_data)
         if dropout is float:
-            lstm = Dropout(dropout)(lstm)
+            blstm = Dropout(dropout)(blstm)
         # Add attention in each stream
-        result, attention = Attention(return_attention=True)(lstm)
+        result, attention = Attention(return_attention=True)(blstm)
         seq.append(input_data)
-        lstms.append(result)
+        blstms.append(result)
     # Concatenate independent streams
-    cat = keras.layers.concatenate(lstms, axis=-1)
+    cat = keras.layers.concatenate(blstms, axis=-1)
     dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(cat)
     model = Model(seq, dense)
     model.compile(loss='binary_crossentropy',
@@ -498,7 +498,7 @@ def create_multistream_attention_lstm(input_shapes, hu=20, output=1, dropout=Non
     return model
 
 
-def create_multistream_attention_context_lstm(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+def create_multistream_attention_context_blstm(input_shapes, hu=20, output=1, dropout=None, gpu=True):
     # expected input_data data shape: (num_streams, timesteps, data_dim)
     seq_shape = []
     for shape in input_shapes:
@@ -507,21 +507,21 @@ def create_multistream_attention_context_lstm(input_shapes, hu=20, output=1, dro
 
     # Create a LSTM for each stream
     seq = []
-    lstms = []
+    blstms = []
     for i in range(n):
         input_data = Input(seq_shape[i])
         if gpu:
-            lstm = CuDNNLSTM(hu, input_shape=input_shapes[i], return_sequences=True)(input_data)
+            blstm = Bidirectional(CuDNNLSTM(hu, return_sequences=True), input_shape=input_shapes[i])(input_data)
         else:
-            lstm = LSTM(hu, input_shape=input_shapes[i], return_sequences=True)(input_data)
+            blstm = Bidirectional(LSTM(hu, return_sequences=True), input_shape=input_shapes[i])(input_data)
         if dropout is float:
-            lstm = Dropout(dropout)(lstm)
+            blstm = Dropout(dropout)(blstm)
         # Add attention in each stream
-        result, attention = AttentionWithContext(return_attention=True)(lstm)
+        result, attention = AttentionWithContext(return_attention=True)(blstm)
         seq.append(input_data)
-        lstms.append(result)
+        blstms.append(result)
     # Concatenate independent streams
-    cat = keras.layers.concatenate(lstms, axis=-1)
+    cat = keras.layers.concatenate(blstms, axis=-1)
     dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(cat)
     model = Model(seq, dense)
     model.compile(loss='binary_crossentropy',
@@ -530,7 +530,7 @@ def create_multistream_attention_context_lstm(input_shapes, hu=20, output=1, dro
     return model
 
 
-def dense_binary_lstm(input_data):
+def dense_binary_blstm(input_data):
     # Input can be either a folder containing csv files or a .npy file
     if input_data.endswith(".npy"):
         loaded_array = np.load(input_data)
@@ -645,7 +645,7 @@ def test(gpu=False):
     plt.show()
 
 
-def stacked_h_binary_lstm(input_data):
+def stacked_h_binary_blstm(input_data):
     # Input can be either a folder containing csv files or a .npy file
     if input_data.endswith(".npy"):
         loaded_array = np.load(input_data)
@@ -656,7 +656,7 @@ def stacked_h_binary_lstm(input_data):
 
     seed = 8
 
-    classifier = KerasClassifier(build_fn=create_basic_lstm, timesteps=X.shape[1], data_dim=X.shape[2], output=1,
+    classifier = KerasClassifier(build_fn=create_basic_blstm, timesteps=X.shape[1], data_dim=X.shape[2], output=1,
                                  dropout=None, gpu=False, epochs=50, batch_size=8, verbose=1)
     folds = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
     results = cross_val_score(classifier, X, Y, cv=folds, verbose=1)
@@ -679,15 +679,15 @@ def standard_vs_binary(input_data, cv=10):
     epochs = 100
     batch_size = 32
     gpu = True
-    classifier_basic = KerasClassifier(build_fn=create_basic_lstm, hu=hu, timesteps=X.shape[1], data_dim=X.shape[2], output=1,
+    classifier_basic = KerasClassifier(build_fn=create_basic_blstm, hu=hu, timesteps=X.shape[1], data_dim=X.shape[2], output=1,
                                        dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size, verbose=1)
-    classifier_double_dense = KerasClassifier(build_fn=create_basic_lstm, hu=hu, timesteps=X.shape[1], data_dim=X.shape[2],
+    classifier_double_dense = KerasClassifier(build_fn=create_basic_blstm, hu=hu, timesteps=X.shape[1], data_dim=X.shape[2],
                                               output=1,
                                               dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size, verbose=1)
-    classifier_attention = KerasClassifier(build_fn=create_attention_lstm, hu=hu, timesteps=X.shape[1], data_dim=X.shape[2],
+    classifier_attention = KerasClassifier(build_fn=create_attention_blstm, hu=hu, timesteps=X.shape[1], data_dim=X.shape[2],
                                            output=1,
                                            dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size, verbose=1)
-    classifier_attention_context = KerasClassifier(build_fn=create_attention_context_lstm, hu=hu, timesteps=X.shape[1],
+    classifier_attention_context = KerasClassifier(build_fn=create_attention_context_blstm, hu=hu, timesteps=X.shape[1],
                                                    data_dim=X.shape[2],
                                                    output=1,
                                                    dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size, verbose=1)
@@ -755,20 +755,20 @@ def modalities(inputs, cv=10):
         folds = cv
 
     for stream_idx in range(len(inputs)):
-        classifier_basic = KerasClassifier(build_fn=create_basic_lstm, hu=hu, timesteps=X[stream_idx].shape[1], data_dim=X[stream_idx].shape[2],
+        classifier_basic = KerasClassifier(build_fn=create_basic_blstm, hu=hu, timesteps=X[stream_idx].shape[1], data_dim=X[stream_idx].shape[2],
                                            output=1,
                                            dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size, verbose=2)
-        classifier_double_dense = KerasClassifier(build_fn=create_basic_lstm, hu=hu, timesteps=X[stream_idx].shape[1],
+        classifier_double_dense = KerasClassifier(build_fn=create_basic_blstm, hu=hu, timesteps=X[stream_idx].shape[1],
                                                   data_dim=X[stream_idx].shape[2],
                                                   output=1,
                                                   dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size,
                                                   verbose=2)
-        classifier_attention = KerasClassifier(build_fn=create_attention_lstm, hu=hu, timesteps=X[stream_idx].shape[1],
+        classifier_attention = KerasClassifier(build_fn=create_attention_blstm, hu=hu, timesteps=X[stream_idx].shape[1],
                                                data_dim=X[stream_idx].shape[2],
                                                output=1,
                                                dropout=dropout, gpu=gpu, epochs=epochs, batch_size=batch_size,
                                                verbose=2)
-        classifier_attention_context = KerasClassifier(build_fn=create_attention_context_lstm, hu=hu,
+        classifier_attention_context = KerasClassifier(build_fn=create_attention_context_blstm, hu=hu,
                                                        timesteps=X[stream_idx].shape[1],
                                                        data_dim=X[stream_idx].shape[2],
                                                        output=1,
@@ -788,7 +788,7 @@ def modalities(inputs, cv=10):
         print("Result attention with context: %.2f%% (%.2f%%)" % (
             results_attention_context.mean() * 100, results_attention_context.std() * 100))
 
-        with open(os.path.join(os.path.split(inputs[stream_idx])[-2], "lstm_results_modalities.txt"), "a+") as output:
+        with open(os.path.join(os.path.split(inputs[stream_idx])[-2], "blstm_results_modalities.txt"), "a+") as output:
             output.write("Database: %s\n" % os.path.split(inputs[stream_idx])[-2])
             output.write("Data: %s\n" % os.path.split(inputs[stream_idx])[-1])
             output.write("Hidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s\n" % (hu, epochs, batch_size, dropout))
@@ -799,16 +799,16 @@ def modalities(inputs, cv=10):
                 results_attention_context.mean() * 100, results_attention_context.std() * 100))
 
     # Multidata
-    classifier_basic = create_multidata_basic_lstm(hu=hu, input_shapes=input_shapes,
+    classifier_basic = create_multidata_basic_blstm(hu=hu, input_shapes=input_shapes,
                                        output=1,
                                        dropout=dropout, gpu=gpu)
-    classifier_double_dense = create_multidata_basic_lstm(hu=hu, input_shapes=input_shapes,
+    classifier_double_dense = create_multidata_basic_blstm(hu=hu, input_shapes=input_shapes,
                                               output=1,
                                               dropout=dropout, gpu=gpu)
-    classifier_attention = create_multidata_attention_lstm(hu=hu, input_shapes=input_shapes,
+    classifier_attention = create_multidata_attention_blstm(hu=hu, input_shapes=input_shapes,
                                            output=1,
                                            dropout=dropout, gpu=gpu)
-    classifier_attention_context = create_multidata_attention_context_lstm(hu=hu,
+    classifier_attention_context = create_multidata_attention_context_blstm(hu=hu,
                                                    input_shapes=input_shapes,
                                                    output=1,
                                                    dropout=dropout, gpu=gpu)
@@ -826,7 +826,7 @@ def modalities(inputs, cv=10):
     print("Result early fusion attention with context: %.2f%% (%.2f%%)" % (
         results_attention_context.mean() * 100, results_attention_context.std() * 100))
 
-    with open(os.path.join(os.path.split(inputs[0])[-2], "lstm_results_modalities.txt"), "a+") as output:
+    with open(os.path.join(os.path.split(inputs[0])[-2], "blstm_results_modalities.txt"), "a+") as output:
         output.write("Database: %s\n" % os.path.split(inputs[0])[-2])
         output.write("Data: %s\n" % " + ".join([os.path.split(input_data)[-1] for input_data in inputs]))
         output.write("Hidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s\n" % (hu, epochs, batch_size, dropout))
@@ -839,20 +839,20 @@ def modalities(inputs, cv=10):
             results_attention_context.mean() * 100, results_attention_context.std() * 100))
 
     # Multistream
-    classifier_basic = create_multistream_basic_lstm(hu=hu, input_shapes=input_shapes,
+    classifier_basic = create_multistream_basic_blstm(hu=hu, input_shapes=input_shapes,
                                                    output=1,
                                                    dropout=dropout, gpu=gpu)
-    classifier_double_dense = create_multistream_basic_lstm(hu=hu, input_shapes=input_shapes,
+    classifier_double_dense = create_multistream_basic_blstm(hu=hu, input_shapes=input_shapes,
                                                           output=1,
                                                           dropout=dropout, gpu=gpu)
-    classifier_attention = create_multistream_attention_lstm(hu=hu, input_shapes=input_shapes,
+    classifier_attention = create_multistream_attention_blstm(hu=hu, input_shapes=input_shapes,
                                                            output=1,
                                                            dropout=dropout, gpu=gpu)
-    classifier_attention_context = create_multistream_attention_context_lstm(hu=hu,
+    classifier_attention_context = create_multistream_attention_context_blstm(hu=hu,
                                                                            input_shapes=input_shapes,
                                                                            output=1,
                                                                            dropout=dropout, gpu=gpu)
-    
+
     results_basic = metrics.cross_val_score(classifier_basic, X, Y, scoring="roc_auc", cv=folds, epochs=epochs,
                                             batch_size=batch_size, verbose=2)
     results_double_dense = metrics.cross_val_score(classifier_double_dense, X, Y, scoring="roc_auc", cv=folds,
@@ -872,7 +872,7 @@ def modalities(inputs, cv=10):
     print("Result middle fusion attention with context: %.2f%% (%.2f%%)" % (
         results_attention_context.mean() * 100, results_attention_context.std() * 100))
 
-    with open(os.path.join(os.path.split(inputs[0])[-2], "lstm_results_modalities.txt"), "a+") as output:
+    with open(os.path.join(os.path.split(inputs[0])[-2], "blstm_results_modalities.txt"), "a+") as output:
         output.write("Database: %s\n" % os.path.split(inputs[0])[-2])
         output.write("Data: %s\n" % " + ".join([os.path.split(input_data)[-1] for input_data in inputs]))
         output.write("Hidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s\n" % (hu, epochs, batch_size, dropout))

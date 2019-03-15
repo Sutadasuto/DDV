@@ -49,7 +49,7 @@ if nargin < 3
     sample_rate=0.01; % Default to 10 ms sampling
 end
 
-original_sample_rate=0.01;
+original_sample_rate=sample_rate;
 
 % F0 settings
 F0min = 50; % Minimum F0 set to 50 Hz

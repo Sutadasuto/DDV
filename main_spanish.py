@@ -43,6 +43,7 @@ classifierList = [
 print("List of classifiers ready.")
 
 dataset_name = "aborto_amigo_10_splits"
+fps = 29.97
 print("Working the %s database" % dataset_name)
 database_folder, plot_title, transcripts_folder, audios_folder, \
 of_target_folder, covarep_target_folder, datasets_folder, complementarity_folder \
@@ -61,17 +62,18 @@ textAnalyzer = False
 videoAnalysis = False
 ngrams = [1, 2, 3, 4]
 
-mixup = True
-earlyFusions = True
+mixup = False
+earlyFusions = False
 
-analysis = False
-features_analysis = False
-fusion_analysis = False
-complementariy_analysis = False
+analysis = True
+features_analysis = True
+fusion_analysis = True
+complementariy_analysis = True
 
-boosting_comparison = False
+boosting_comparison = True
 
 folds = 10
+
 try:
     # Here we convert the .mp4 files to .wav audios
     if extractAudio:
@@ -82,7 +84,7 @@ except:
 
 try:
     if covarep:
-        a.extract_features_covarep(audios_folder, covarep_target_folder)
+        a.extract_features_covarep(audios_folder, covarep_target_folder, 1/fps)
 except:
     print("ERROR with COVAREP.")
     raise

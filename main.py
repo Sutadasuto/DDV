@@ -42,7 +42,8 @@ classifierList = [
 ]
 print("List of classifiers ready.")
 
-dataset_name = "court_pruned_10_splits"
+dataset_name = "court_pruned"
+fps = 29.97
 print("Working the %s database" % dataset_name)
 database_folder, plot_title, transcripts_folder, audios_folder, \
 of_target_folder, covarep_target_folder, datasets_folder, complementarity_folder \
@@ -50,29 +51,30 @@ of_target_folder, covarep_target_folder, datasets_folder, complementarity_folder
 print("Dataset parameters loaded.")
 
 extract_audio = True
-extract_transcripts = False
+extract_transcripts = True
 
 covarep = True
 openFace = True
-time_stamped_pos = False
+time_stamped_pos = True
 
 audio_analysis = True
-text_analyzer = False
+text_analyzer = True
 video_analysis = True
 ngrams = [1, 2, 3, 4]
-ngrams = [1, 2, 3]
+# ngrams = [1, 2, 3]
 
 mixup = True
 early_fusions = True
 
-analysis = True
-features_analysis = True
-fusion_analysis = True
-complementariy_analysis = True
+analysis = False
+features_analysis = False
+fusion_analysis = False
+complementariy_analysis = False
 
-boosting_comparison = True
+boosting_comparison = False
 
 folds = 10
+
 try:
     # Here we convert the .mp4 files to .wav audios
     if extract_audio:
@@ -83,7 +85,7 @@ except:
 
 try:
     if covarep:
-        a.extract_features_covarep(audios_folder, covarep_target_folder)
+        a.extract_features_covarep(audios_folder, covarep_target_folder, 1/fps)
 except:
     print("ERROR with COVAREP.")
     raise

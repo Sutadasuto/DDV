@@ -27,6 +27,54 @@ def extract_features_covarep(inputFolder, outputFolder=None, sample_rate=0.01):
         subprocess.call(command, shell=True)
 
 
+def get_frames_per_category(database_folder, output_folder=None):
+
+    if output_folder is None:
+        output_folder = os.path.join(os.path.split(database_folder)[0], "covarep_frames")
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    classes = sorted([f for f in os.listdir(database_folder)
+                      if os.path.isdir(os.path.join(database_folder, f)) and not f.startswith('.')],
+                     key=lambda f: f.lower())
+
+    categoryDictionary = {"voice": ["f0", "vuv"],
+                          "glottal_flow": ["naq", "qoq", "h1h2", "psp", "mdq", "peakslope", "rd", "creak"],
+                          "mcep": ["mcep_"],
+                          "hmpdm": ["hmpdm_"],
+                          "hmpdd": ["hmpdd_"],
+                          }
+    all = []
+    for key in categoryDictionary.keys():
+        all += categoryDictionary[key]
+    categoryDictionary["all"] = all
+
+    for category in categoryDictionary.keys():
+        category_folder = os.path.join(output_folder, category)
+        if not os.path.exists(category_folder):
+            os.makedirs(category_folder)
+        for className in classes:
+            if not os.path.exists(os.path.join(category_folder, className)):
+                os.makedirs(os.path.join(category_folder, className))
+            files = sorted([f for f in os.listdir(os.path.join(database_folder, className))
+                          if os.path.isfile(os.path.join(database_folder, className, f)) and not f.startswith('.')
+                            and f[-4:].lower() == ".csv"], key=lambda f: f.lower())
+            for feat_file in files:
+                header = []
+                df = pandas.read_csv(os.path.join(database_folder, className, feat_file), header='infer')
+                feature_names = df.columns.values
+                for feat in feature_names:
+                    reference = categoryDictionary.get(category)
+                    for string in reference:
+                        if feat.strip().lower().startswith(string) \
+                                or feat.strip().lower().endswith(string):
+                            header.append(feat)
+                df1 = df[header]
+                df1.to_csv(os.path.join(category_folder, className, feat_file), index=False)
+        print("Frames of %s acquired." % (category))
+
+
 def get_statistics_covarep(databaseFolder, processedDataFolder=None, outputFileName=None, relationName=None):
 
     if processedDataFolder == None:
