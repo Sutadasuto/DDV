@@ -5,7 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/audio/covarep" />
       <excludeFolder url="file://$MODULE_DIR$/text/Dictionaries" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.5" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.6 (thesis)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TestRunnerService">

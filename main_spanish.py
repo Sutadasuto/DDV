@@ -31,7 +31,7 @@ def warn(*args, **kwargs):
 import warnings
 warnings.warn = warn
 
-beggining = time.time()
+beginning = time.time()
 classifierList = [
     LinearSVC(random_state=10, tol=1e-7, max_iter=3000),
     # DecisionTreeClassifier(random_state=10),
@@ -42,7 +42,7 @@ classifierList = [
 ]
 print("List of classifiers ready.")
 
-dataset_name = "aborto_amigo_10_splits"
+dataset_name = "aborto_amigo"
 fps = 29.97
 print("Working the %s database" % dataset_name)
 database_folder, plot_title, transcripts_folder, audios_folder, \
@@ -508,4 +508,4 @@ if a:
         datasets_folder, customFolds, "bssd"
     )
 a = 0
-print("Finished %s dataset in %s sec" % (dataset_name, round(time.time()-beggining, 1)))
+print("Finished %s dataset in %s sec" % (dataset_name, round(time.time()-beginning, 1)))
