@@ -122,11 +122,11 @@ except:
 
 try:
     if audioAnalysis:
-        print("Getting views from accoustical modality.")
-        a.get_statistics_covarep(covarep_target_folder, os.path.join(datasets_folder, "accoustic"))
-        a.get_statistics_per_category(covarep_target_folder, os.path.join(datasets_folder, "accoustic"))
+        print("Getting views from acoustical modality.")
+        a.get_statistics_covarep(covarep_target_folder, os.path.join(datasets_folder, "acoustic"))
+        a.get_statistics_per_category(covarep_target_folder, os.path.join(datasets_folder, "acoustic"))
 except:
-    print("ERROR extracting accoustic features.")
+    print("ERROR extracting acoustic features.")
     raise
 
 try:
@@ -157,7 +157,7 @@ if mixup:
         os.makedirs(os.path.join(datasets_folder, "all_views"))
     if not os.path.exists(os.path.join(datasets_folder, "all_modalities")):
         os.makedirs(os.path.join(datasets_folder, "all_modalities"))
-    modalities_to_mix = ["visual", "accoustic"]#, "textual"]
+    modalities_to_mix = ["visual", "acoustic"]#, "textual"]
 
     for modality in modalities_to_mix:
         copyfile(os.path.join(datasets_folder, modality, "all.arff"),
@@ -174,7 +174,7 @@ if mixup:
 if earlyFusions:
     fusion.early_fusion(datasets_folder,
                         fileNames=["visual/all.arff",
-                                   "accoustic/all.arff"],
+                                   "acoustic/all.arff"],
                                    #"textual/all.arff"],
                         targetFileFolder=os.path.join(datasets_folder, "fusion"), relation="early_fusion")
     if mixup:
@@ -196,8 +196,8 @@ visualFiles = sorted([os.path.join("visual", f) for f in os.listdir(os.path.join
                       if os.path.isfile(os.path.join(datasets_folder, "visual", f))
                       and not f.startswith('.') and f.endswith(".arff") and f != "all.arff"],
                      key=lambda f: f.lower())
-accousticFiles = sorted([os.path.join("accoustic", f) for f in os.listdir(os.path.join(datasets_folder, "accoustic"))
-                         if os.path.isfile(os.path.join(datasets_folder, "accoustic", f))
+acousticFiles = sorted([os.path.join("acoustic", f) for f in os.listdir(os.path.join(datasets_folder, "acoustic"))
+                         if os.path.isfile(os.path.join(datasets_folder, "acoustic", f))
                          and not f.startswith('.') and f.endswith(".arff") and f != "all.arff"],
                         key=lambda f: f.lower())
 # linguisticalFiles = sorted([os.path.join("textual", f) for f in os.listdir(os.path.join(datasets_folder, "textual"))
@@ -211,14 +211,14 @@ timeFusionFiles = sorted([os.path.join("fusion", f) for f in os.listdir(os.path.
 fusionFiles = ["fusion/early_fusion.arff"] + timeFusionFiles
 
 modalityFiles = ["visual/all.arff",
-                 "accoustic/all.arff"]#,
+                 "acoustic/all.arff"]#,
                  #"textual/all.arff"]
-files = (visualFiles + accousticFiles)# + linguisticalFiles)
-#filesLists = [visualFiles, ["visual/all.arff"], accousticFiles, ["accoustic/all.arff"], linguisticalFiles,
+files = (visualFiles + acousticFiles)# + linguisticalFiles)
+#filesLists = [visualFiles, ["visual/all.arff"], acousticFiles, ["acoustic/all.arff"], linguisticalFiles,
 #              ["textual/all.arff"], fusionFiles]
-filesLists = [visualFiles, ["visual/all.arff"], accousticFiles, ["accoustic/all.arff"], fusionFiles]
+filesLists = [visualFiles, ["visual/all.arff"], acousticFiles, ["acoustic/all.arff"], fusionFiles]
 cfdDictionary = {tuple(visualFiles): "visual_features",
-                 tuple(accousticFiles): "accoustical_features",
+                 tuple(acousticFiles): "acoustical_features",
                  #tuple(linguisticalFiles): "linguistical_features",
                  tuple(modalityFiles): "all_modalities",
                  tuple(files): "all_views"}
@@ -266,7 +266,7 @@ if analysis:
                                                   customFolds, "stacking_modalities_with_proba")
             matrices.append(matrix)
             matrix = ml.my_method(
-                fusion.S3DB(clf, clf, ["visual", "accoustic"], datasets_folder,
+                fusion.S3DB(clf, clf, ["visual", "acoustic"], datasets_folder,
                             file_exceptions=["all.arff"]),
                 datasets_folder, customFolds, "poster_proposal"
             )
@@ -405,7 +405,7 @@ def perform_boosting_comparison(object_lists, datasets_folder, modalities):
 if boosting_comparison:
     booster = AdaBoostClassifier(DecisionTreeClassifier(random_state=10), random_state=10)
     weak_learner = DecisionTreeClassifier(random_state=10)
-    modalities = ["visual", "accoustic", "all_views"]
+    modalities = ["visual", "acoustic", "all_views"]
     classifierResults = []
     now = time.time()
     matrices = Parallel(n_jobs=multiprocessing.cpu_count())(
@@ -490,12 +490,12 @@ if a:
         datasets_folder, customFolds, "bssd_cv"
     )
     matrix = ml.my_method(
-        fusion.S3DB(GaussianNB(), GaussianNB(), ["visual", "accoustic"], datasets_folder,
+        fusion.S3DB(GaussianNB(), GaussianNB(), ["visual", "acoustic"], datasets_folder,
                     file_exceptions=["all.arff"]),
         datasets_folder, customFolds, "poster_proposal"
     )
     matrix2 = ml.my_method(
-        fusion2.S3DB(GaussianNB(), GaussianNB(), ["visual", "accoustic"], datasets_folder,
+        fusion2.S3DB(GaussianNB(), GaussianNB(), ["visual", "acoustic"], datasets_folder,
                      file_exceptions=["all.arff"]),
         datasets_folder, customFolds, "poster_proposal"
     )

@@ -78,11 +78,11 @@ def get_frames_per_category(database_folder, output_folder=None):
 def get_statistics_covarep(databaseFolder, processedDataFolder=None, outputFileName=None, relationName=None):
 
     if processedDataFolder == None:
-        processedDataFolder = "datasets/accoustic"
+        processedDataFolder = "datasets/acousticic"
     if outputFileName== None:
         outputFileName = "all"
     if relationName == None:
-        relationName = "all_accoustical"
+        relationName = "all_acousticical"
 
     classes = sorted([f for f in os.listdir(databaseFolder)
                       if os.path.isdir(os.path.join(databaseFolder, f)) and not f.startswith('.')],
@@ -142,7 +142,7 @@ def get_statistics_covarep(databaseFolder, processedDataFolder=None, outputFileN
 def get_statistics_per_category(databaseFolder, processedDataFolder=None):
 
     if processedDataFolder == None:
-        processedDataFolder = "datasets/accoustic"
+        processedDataFolder = "datasets/acousticic"
 
     classes = sorted([f for f in os.listdir(databaseFolder)
                       if os.path.isdir(os.path.join(databaseFolder, f)) and not f.startswith('.')],

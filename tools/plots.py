@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 def plot_classifiers_matrix(classifiersMatrix, title, targetFolder, stopKey="all_", subtitles=None, numMetrics=2):
 
     if subtitles == None:
-        subtitles = ["Visual Modality", "Accoustical Modality", "Textual Modality", "Fusion"]
-        #subtitles = ["Visual Modality", "Accoustical Modality", "Fusion"]
+        subtitles = ["Visual Modality", "Acoustical Modality", "Textual Modality", "Fusion"]
+        #subtitles = ["Visual Modality", "Acoustical Modality", "Fusion"]
     elif subtitles == False:
         subtitles = []
 
