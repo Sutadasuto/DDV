@@ -42,7 +42,7 @@ def early_fusion(datasetsFolder, fileNames=None, exceptions=[], targetFileFolder
     am.create_arff(mMatrix, classes, targetFileFolder, outputFileName, relation)
 
 
-def syntax_informed(textsFolder, accousticFolder, processedDataFolder=None, outputFileName=None, relationName=None,
+def syntax_informed(textsFolder, acousticFolder, processedDataFolder=None, outputFileName=None, relationName=None,
                     sample_rate=None):
     if sample_rate == None:
         sample_rate = 0.01
@@ -51,7 +51,7 @@ def syntax_informed(textsFolder, accousticFolder, processedDataFolder=None, outp
     if outputFileName == None:
         outputFileName = "syntax_informed"
     if relationName == None:
-        relationName = "syntax_informed_accoustic"
+        relationName = "syntax_informed_acoustic"
 
     tags = t.load_tags()
     classes = sorted([f for f in os.listdir(textsFolder)
@@ -73,18 +73,18 @@ def syntax_informed(textsFolder, accousticFolder, processedDataFolder=None, outp
                 posStamps = line.split(",")
             else:
                 posStamps = []
-            with open(os.path.join(accousticFolder, className, name)) as accousticFile:
-                reader = csv.reader(accousticFile)
-                accousticMatrix = []
+            with open(os.path.join(acousticFolder, className, name)) as acousticFile:
+                reader = csv.reader(acousticFile)
+                acousticMatrix = []
                 initialTime = -sample_rate
                 endTime = 0
                 for row in reader:
-                    accousticMatrix.append([initialTime, endTime] + row)
+                    acousticMatrix.append([initialTime, endTime] + row)
                     initialTime += sample_rate
                     endTime += sample_rate
             for tag in tags:
                 if headerFlag:
-                    for feature in accousticMatrix[0][2:-1]:
+                    for feature in acousticMatrix[0][2:-1]:
                         header.append("%s_%s" % (tag, feature))
                 listOfTimes = []
                 for pos in posStamps:
@@ -94,22 +94,22 @@ def syntax_informed(textsFolder, accousticFolder, processedDataFolder=None, outp
                 index = 0
                 rows = []
                 for window in listOfTimes:
-                    for i in range(index + 1, len(accousticMatrix)):
-                        if accousticMatrix[i][0] >= window[0]:
+                    for i in range(index + 1, len(acousticMatrix)):
+                        if acousticMatrix[i][0] >= window[0]:
                             j = i
-                            while window[1] > accousticMatrix[j][1]:
-                                rows.append(accousticMatrix[j])
+                            while window[1] > acousticMatrix[j][1]:
+                                rows.append(acousticMatrix[j])
                                 j += 1
-                                if j >= len(accousticMatrix):
+                                if j >= len(acousticMatrix):
                                     break
                             index = j - 1
                             break
                 if len(rows) > 0:
                     values = [[float(number) for number in row[2:]] for row in rows]
                 else:
-                    values = [[0.0] * len(accousticMatrix[0][2:-1])]
+                    values = [[0.0] * len(acousticMatrix[0][2:-1])]
                 array = np.array(values)
-                for i in range(len(accousticMatrix[0][2:-1])):
+                for i in range(len(acousticMatrix[0][2:-1])):
                     column = array[:, i]
                     average = np.sum(column) / len(column)
                     if np.isinf(average):
@@ -126,7 +126,7 @@ def syntax_informed(textsFolder, accousticFolder, processedDataFolder=None, outp
     print("Syntax informed representation acquired.")
 
 
-def au_informed(ofFeaturesFolder, accousticFolder, processedDataFolder=None, outputFileName=None, relationName=None,
+def au_informed(ofFeaturesFolder, acousticFolder, processedDataFolder=None, outputFileName=None, relationName=None,
                 sample_rate=None):
     if sample_rate == None:
         sample_rate = 0.01
@@ -135,7 +135,7 @@ def au_informed(ofFeaturesFolder, accousticFolder, processedDataFolder=None, out
     if outputFileName == None:
         outputFileName = "au_informed"
     if relationName == None:
-        relationName = "au_informed_accoustic"
+        relationName = "au_informed_acoustic"
 
     classes = sorted([f for f in os.listdir(ofFeaturesFolder)
                       if os.path.isdir(os.path.join(ofFeaturesFolder, f)) and not f.startswith('.')],
@@ -172,18 +172,18 @@ def au_informed(ofFeaturesFolder, accousticFolder, processedDataFolder=None, out
                         maxVal = float(visualMatrix[row][tagIndex])
                 aus.append("%s;%s;%s" % (tag, visualMatrix[row][2].strip(), visualMatrix[row + 1][2].strip()))
 
-            with open(os.path.join(accousticFolder, className, name)) as accousticFile:
-                reader = csv.reader(accousticFile)
-                accousticMatrix = []
+            with open(os.path.join(acousticFolder, className, name)) as acousticFile:
+                reader = csv.reader(acousticFile)
+                acousticMatrix = []
                 initialTime = -sample_rate
                 endTime = 0
                 for row in reader:
-                    accousticMatrix.append([initialTime, endTime] + row)
+                    acousticMatrix.append([initialTime, endTime] + row)
                     initialTime += sample_rate
                     endTime += sample_rate
             for tag in tags:
                 if headerFlag:
-                    for feature in accousticMatrix[0][2:-1]:
+                    for feature in acousticMatrix[0][2:-1]:
                         header.append("%s_%s" % (tag.strip(), feature))
                 listOfTimes = []
                 for frame in aus:
@@ -193,22 +193,22 @@ def au_informed(ofFeaturesFolder, accousticFolder, processedDataFolder=None, out
                 index = 0
                 rows = []
                 for window in listOfTimes:
-                    for i in range(index + 1, len(accousticMatrix)):
-                        if accousticMatrix[i][0] >= window[0]:
+                    for i in range(index + 1, len(acousticMatrix)):
+                        if acousticMatrix[i][0] >= window[0]:
                             j = i
-                            while window[1] > accousticMatrix[j][1]:
-                                rows.append(accousticMatrix[j])
+                            while window[1] > acousticMatrix[j][1]:
+                                rows.append(acousticMatrix[j])
                                 j += 1
-                                if j >= len(accousticMatrix):
+                                if j >= len(acousticMatrix):
                                     break
                             index = j - 1
                             break
                 if len(rows) > 0:
                     values = [[float(number) for number in row[2:]] for row in rows]
                 else:
-                    values = [[0.0] * len(accousticMatrix[0][2:-1])]
+                    values = [[0.0] * len(acousticMatrix[0][2:-1])]
                 array = np.array(values)
-                for i in range(len(accousticMatrix[0][2:-1])):
+                for i in range(len(acousticMatrix[0][2:-1])):
                     column = array[:, i]
                     average = np.sum(column) / len(column)
                     if np.isinf(average):
@@ -250,8 +250,8 @@ def syntax_informed_au(textsFolder, ofFeaturesFolder, processedDataFolder=None, 
             with open(os.path.join(textsFolder, className, "pos_timestamps", name)) as syntaxFile:
                 line = syntaxFile.readline()
                 posStamps = line.split(",")
-            with open(os.path.join(ofFeaturesFolder, className, name)) as accousticFile:
-                reader = list(csv.reader(accousticFile))
+            with open(os.path.join(ofFeaturesFolder, className, name)) as acousticFile:
+                reader = list(csv.reader(acousticFile))
             visualMatrix = []
             auIndices = []
             row = []

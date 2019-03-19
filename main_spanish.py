@@ -321,7 +321,7 @@ if analysis:
 
         am.matrices_comparison(classifierResults, firstColumn, complementarity_folder,
                                plot_title=plot_title,
-                               plot_subtitles=["Visual Modality", "Accoustical Modality", "Fusion"])
+                               plot_subtitles=["Visual Modality", "Acoustical Modality", "Fusion"])
 
         if complementariy_analysis:
             matrix = ml.complementarity_analysis(clf, datasets_folder, modalityFiles, folds=customFolds)
@@ -344,7 +344,7 @@ if analysis:
             am.complementarity_comparison(complementarityResults, header, complementarity_folder, plot_title=plot_title)
 
     am.matrices_comparison(classifierResults, firstColumn, complementarity_folder,
-                           plot_title=plot_title, plot_subtitles=["Visual Modality", "Accoustical Modality", "Fusion"])
+                           plot_title=plot_title, plot_subtitles=["Visual Modality", "Acoustical Modality", "Fusion"])
     if complementariy_analysis:
         am.complementarity_comparison(complementarityResults, header, complementarity_folder, plot_title=plot_title)
 

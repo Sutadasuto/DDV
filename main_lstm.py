@@ -32,7 +32,7 @@ if not os.path.exists(os.path.join(os.path.split(covarep_target_folder)[0], "cov
 
 # lstm.test()
 # my_lstm = lstm.basic_binary_lstm_cv(folder)
-# lstm.modalities((covarep_target_folder, of_target_folder), custom_folds)
-# blstm.modalities((covarep_target_folder, of_target_folder), custom_folds)
-lstm.modalities((covarep_target_folder, of_target_folder), custom_folds, "kmeans", 20)
-blstm.modalities((covarep_target_folder, of_target_folder), custom_folds, "kmeans", 20)
+lstm.modalities((covarep_target_folder, of_target_folder), custom_folds)
+blstm.modalities((covarep_target_folder, of_target_folder), custom_folds)
+# lstm.modalities((covarep_target_folder, of_target_folder), custom_folds, "kmeans", 20)
+# blstm.modalities((covarep_target_folder, of_target_folder), custom_folds, "kmeans", 20)
