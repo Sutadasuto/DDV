@@ -1,3 +1,4 @@
+import csv
 import os
 import math
 import numpy as np
@@ -130,6 +131,135 @@ def plot_complementarity_matrix(complementarityMatrix, title, targetFolder, subt
         plt.tight_layout()
         plt.savefig(os.path.join(targetFolder, "plots", "%s.png" % (metric)))
         plt.close(ax.get_figure())
+
+
+def plot_single_results(folder, title):
+
+    if not os.path.exists(os.path.join(folder, "plots")):
+        os.makedirs(os.path.join(folder, "plots"))
+
+    with open(os.path.join(folder, "summary.csv")) as csv_file:
+        csv_reader = csv.reader(csv_file)
+
+        lines = []
+        separators = []
+        for idx, row in enumerate(csv_reader, -2):
+            if idx == -2:
+                classifier = row[1]
+            elif idx == -1:
+                metric = row[1]
+            else:
+                lines.append(row)
+            if row[0].startswith("all_"):
+                separators.append(idx)
+    data = np.array(lines)
+
+    views_indices = []
+    beginning = 0
+    for separator in separators:
+        indices = [i for i in range(beginning, separator + 1)]
+        beginning = separator + 1
+        views_indices.append(indices)
+
+    sub_data = data[beginning:, :]
+    X = sub_data[:, 0]
+    X = np.array([x.replace("_", " ") for x in X])
+    Y = sub_data[:, 1].astype(float)
+    plt.barh(X, Y, align='center')
+    fig = plt.gcf()
+    size = fig.get_size_inches()
+    fig.set_size_inches(1.1 * size[0], size[1])
+    plt.title("%s\n%s" % (title, "fusion"))
+    plt.ylabel("Views")
+    plt.xlabel(metric)
+    plt.grid(True)
+    if metric.lower() == "accuracy":
+        plt.xlim((20, 80))
+    else:
+        plt.xlim((0.20, 0.80))
+    plt.tight_layout()
+    plt.savefig(os.path.join(folder, "plots", "%s_%s.png" % ("fusion", metric)))
+    plt.close()
+
+    for indices in views_indices:
+        sub_data = data[indices, :]
+        subtitle = data[indices[-1], 0].replace("all_", "") + " modality"
+        X = sub_data[:, 0]
+        X = np.array([x.replace("_", " ") for x in X])
+        Y = sub_data[:, 1].astype(float)
+        plt.bar(X, Y, align='center')
+        plt.title("%s\n%s" % (title, subtitle))
+        plt.xlabel("Views")
+        plt.ylabel(metric)
+        plt.grid(True)
+        plt.xticks(rotation=90)
+        if metric.lower() == "accuracy":
+            plt.ylim((20, 80))
+        else:
+            plt.ylim((0.20, 0.80))
+        plt.tight_layout()
+        plt.savefig(os.path.join(folder, "plots", "%s_%s.png" % (subtitle, metric)))
+        fig = plt.gcf()
+        size = fig.get_size_inches()
+        plt.close()
+
+    for indices in views_indices:
+        sub_data = data[indices, :]
+        X = sub_data[:, 0]
+        X = np.array([x.replace("_", " ") for x in X])
+        Y = sub_data[:, 1].astype(float)
+        plt.bar(X, Y, align='center')
+    fig = plt.gcf()
+    fig.set_size_inches(2*size[0], size[1])
+    plt.title(title)
+    plt.xlabel("Views")
+    plt.ylabel(metric)
+    plt.grid(True)
+    plt.xticks(rotation=90)
+    if metric.lower() == "accuracy":
+        plt.ylim((20, 80))
+    else:
+        plt.ylim((0.20, 0.80))
+    plt.tight_layout()
+    plt.savefig(os.path.join(folder, "plots", "%s_%s.png" % ("All views", metric)))
+    plt.close()
+
+    df = pandas.read_csv(os.path.join(folder, "complementarity.csv"))
+    data = df.values
+    X = df.columns.values[1:]
+
+    # data to plot
+    n_groups = len(X)
+    labels = []
+    values = []
+    for metric in data:
+        label = metric[0]
+        labels.append(label)
+        val = metric[1:]
+        if max(val) > 1.0:
+            val = val/100.0
+        values.append(val)
+
+    # create plot
+    fig, ax = plt.subplots()
+    index = np.arange(n_groups)
+    bar_width = 0.35
+
+    for i in range(len(values)):
+        rects = plt.bar(index + i * bar_width, values[i], bar_width, label=labels[i])
+
+    plt.ylim((0.0, 1.0))
+    plt.xticks(rotation=15)
+    plt.grid(True)
+    plt.xlabel('Features')
+    plt.ylabel('Scores')
+    plt.title('%s\n%s' % (title, "complementarity scores"))
+    plt.xticks(index + bar_width, X)
+    plt.legend()
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(folder, "plots", "complementarity.png"))
+    plt.close()
 
 
 def s3db_errors(data, title, destination, filename):

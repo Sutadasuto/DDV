@@ -434,7 +434,7 @@ def single_modality(input_data, cv=10):
             results_attention_context.mean() * 100, results_attention_context.std() * 100))
 
 
-def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg"):
+def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_folder=None):
     # Input can be either a folder containing csv files or a .npy file
     if inputs is str:
         if inputs.endswith(".npy"):
@@ -458,6 +458,9 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg"):
             for stream_idx, stream in enumerate(X):
                 X[stream_idx] = sequences.kmeans_seq_reduction(stream, k=reduction)
 
+    if output_folder is None:
+        output_folder = os.path.split(inputs[0])[0]
+
     hu = 200
     dropout = None
     epochs = 100
@@ -469,7 +472,7 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg"):
     else:
         folds = cv
 
-    with open(os.path.join(os.path.split(inputs[0])[0], "lstm_results_modalities.txt"), "w+") as output_file:
+    with open(os.path.join(output_folder, "lstm_results_modalities.txt"), "w+") as output_file:
         for stream_idx in range(len(inputs)):
             classifiers = []
             classifiers.append(KerasClassifier(build_fn=create_basic_lstm, hu=hu, timesteps=X[stream_idx].shape[1],
