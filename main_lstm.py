@@ -43,3 +43,5 @@ acoustical_views = utilities.get_modality_views(os.path.join(database_folder + "
 # blstm.modalities((covarep_target_folder, of_target_folder), custom_folds)
 # lstm.modalities((covarep_target_folder, of_target_folder), custom_folds, "kmeans", 20)
 # blstm.modalities((covarep_target_folder, of_target_folder), custom_folds, "kmeans", 20)
+lstm.modalities(visual_views, custom_folds, "kmeans", 20, database_folder + "_")
+# blstm.modalities(visual_views, custom_folds, "kmeans", 20, database_folder + "_")
