@@ -74,7 +74,8 @@ def kmeans_seq_reduction(dataset, k=20, seed=0):
 
     new_dataset = []
     for instance in dataset:
-        new_instance, frames = kmeans_frame_selection(instance, k, seed)
+        instance_length = instance.shape[0]
+        new_instance, frames = kmeans_frame_selection(instance, min(k, instance_length), seed)
         new_dataset.append(new_instance)
     return np.array(new_dataset)
 
@@ -95,6 +96,33 @@ def multiple_sequence_padding(input_streams, padding="max"):
         max_length = min(lengths)
     else:
         raise ValueError("padding must be either avg, max or min")
+
+    for idx, x in enumerate(input_streams):
+        input_streams[idx] = sequence.pad_sequences(x, maxlen=max_length, dtype="float64")
+
+    return input_streams
+
+
+def multiple_sequence_padding_means(input_streams, padding="max"):
+
+    lengths = []
+    for stream in input_streams:
+        for instance in stream:
+            length = instance.shape[-2]
+            lengths.append(length)
+    lengths = np.array(lengths)
+
+    if padding == "avg":
+        max_length = int(lengths.mean())
+    elif padding == "max":
+        max_length = max(lengths)
+    elif padding == "min":
+        max_length = min(lengths)
+    else:
+        raise ValueError("padding must be either avg, max or min")
+
+    for stream_idx, stream in enumerate(input_streams):
+        input_streams[stream_idx] = kmeans_seq_reduction(stream, k=max_length)
 
     for idx, x in enumerate(input_streams):
         input_streams[idx] = sequence.pad_sequences(x, maxlen=max_length, dtype="float64")
