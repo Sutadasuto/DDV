@@ -455,10 +455,12 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_f
         if seq_reduction == "padding":
             X = sequences.multiple_sequence_padding(X)
         elif seq_reduction == "kmeans":
-            for stream_idx, stream in enumerate(X):
-                X[stream_idx] = sequences.kmeans_seq_reduction(stream, k=reduction)
+            X = sequences.kmeans_seq_reduction(X, k=reduction)
         elif seq_reduction == "pad_means":
             X = sequences.multiple_sequence_padding_means(X, reduction)
+        elif seq_reduction == "sync_kmeans":
+            X = sequences.synchronize_views(X)
+            X = sequences.kmeans_sync_seq_reduction(X, k=reduction)
 
     if output_folder is None:
         output_folder = os.path.split(inputs[0])[0]

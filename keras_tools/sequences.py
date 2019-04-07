@@ -72,12 +72,30 @@ def kmeans_frame_selection(frames, k=20, seed=0):
 
 def kmeans_seq_reduction(dataset, k=20, seed=0):
 
-    new_dataset = []
-    for instance in dataset:
-        instance_length = instance.shape[0]
-        new_instance, frames = kmeans_frame_selection(instance, min(k, instance_length), seed)
-        new_dataset.append(new_instance)
-    return np.array(new_dataset)
+    for stream_idx, stream in enumerate(dataset):
+        new_dataset = []
+        for instance in stream:
+            instance_length = instance.shape[0]
+            new_instance, frames = kmeans_frame_selection(instance, min(k, instance_length), seed)
+            new_dataset.append(new_instance)
+        dataset[stream_idx] = np.array(new_dataset)
+    return dataset
+
+
+def kmeans_sync_seq_reduction(dataset, k=20, seed=0):
+
+    for instance_idx in range(dataset[0].shape[0]):
+        view_vectors = []
+        for stream in dataset:
+            view_vectors.append(stream[instance_idx])
+        instance = np.concatenate(tuple(view_vectors), axis=1)
+        conc_instance, frames = kmeans_frame_selection(instance, k, seed)
+
+        for stream_idx in range(len(dataset)):
+            dataset[stream_idx][instance_idx] = dataset[stream_idx][instance_idx][frames]
+    for idx, stream in enumerate(dataset):
+        dataset[idx] = np.array(stream.tolist())
+    return dataset
 
 
 def multiple_sequence_padding(input_streams, padding="max"):
@@ -128,3 +146,37 @@ def multiple_sequence_padding_means(input_streams, padding="max"):
         input_streams[idx] = sequence.pad_sequences(x, maxlen=max_length, dtype="float64")
 
     return input_streams
+
+
+def pad_views_sequences(views_list, length):
+    padded_list = []
+    for view in views_list:
+        view_len = view.shape[0]
+        turn = 0
+        while view_len > length:
+            view = np.delete(view, (turn), axis=0)
+            view_len = view.shape[0]
+            turn = (turn + 1) * -1
+        padded_list.append(view)
+    return padded_list
+
+
+def synchronize_views(input_streams):
+
+    num_instances = input_streams[0].shape[0]
+
+    for instance_idx in range(num_instances):
+
+        seq_lengths = []
+        samples = []
+        for view in input_streams:
+            seq_lengths.append(view[instance_idx].shape[0])
+            samples.append(view[instance_idx])
+        length = min(seq_lengths)
+        padded_instances = pad_views_sequences(samples, length)
+
+        for view_idx in range(len(padded_instances)):
+            input_streams[view_idx][instance_idx] = padded_instances[view_idx]
+
+    return input_streams
+
