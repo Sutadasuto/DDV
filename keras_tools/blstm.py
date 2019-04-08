@@ -517,7 +517,7 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_f
     else:
         folds = cv
 
-    with open(os.path.join(output_folder, "blstm_results_modalities.txt"), "w+") as output_file:
+    with open(os.path.join(output_folder, "blstm_results_modalities_%s_%s.txt" % (seq_reduction, reduction)), "w+") as output_file:
         for stream_idx in range(len(inputs)):
             classifiers = []
             classifiers.append(KerasClassifier(build_fn=create_basic_blstm, hu=hu, timesteps=X[stream_idx].shape[1],
@@ -649,7 +649,7 @@ def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", outpu
 
     model = create_multistream_hierarchical_model(input_shapes, hu, 1, dropout, gpu)
     streams = [", ".join([os.path.split(i)[1] for i in modality]) for modality in modalities]
-    with open(os.path.join(output_folder, "hierarchical_blstm_with_context.txt"), "w+") as output_file:
+    with open(os.path.join(output_folder, "hierarchical_blstm_with_context_%s_%s.txt" % (seq_reduction, reduction)), "w+") as output_file:
         header = "Database: %s\nData: %s\nHidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s, Seq. reduction: %s, %s\n" % (
             os.path.split(os.path.split(modalities[0][0])[0])[0], " + ".join(streams), hu, epochs, batch_size,
             dropout, seq_reduction, reduction)
