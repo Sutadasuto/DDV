@@ -342,6 +342,44 @@ def create_multistream_attention_context_blstm(input_shapes, hu=20, output=1, dr
     return model
 
 
+def create_multistream_hierarchical_model(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+
+    mod_seq = []
+    mod_representation = []
+    for input_shape in input_shapes:
+        seq_shape = []
+        for shape in input_shape:
+            seq_shape.append(shape)
+        n = len(input_shape)
+
+        # Create a LSTM for each view
+        seq = []
+        blstms = []
+        for i in range(n):
+            input_data = Input(seq_shape[i])
+            if gpu:
+                blstm = Bidirectional(CuDNNLSTM(hu, return_sequences=True), input_shape=input_shape[i])(input_data)
+            else:
+                blstm = Bidirectional(LSTM(hu, return_sequences=True), input_shape=input_shape[i])(input_data)
+            if dropout is float:
+                blstm = Dropout(dropout)(blstm)
+            # Add attention in each stream
+            result, attention = AttentionWithContext(return_attention=True)(blstm)
+            seq.append(input_data)
+            blstms.append(result)
+        # Concatenate independent streams
+        merge = keras.layers.add(blstms)
+        mod_seq.append(seq)
+        mod_representation.append(merge)
+    video_representation = keras.layers.add(mod_representation)
+    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(video_representation)
+    model = Model([item for sublist in mod_seq for item in sublist], dense)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model
+
+
 def test(gpu=False):
     seq_length = 5
     X = [[i + j for j in range(seq_length)] for i in range(100)]
@@ -468,10 +506,10 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_f
     if output_folder is None:
         output_folder = os.path.split(inputs[0])[0]
 
-    hu = 200
+    hu = 50
     dropout = None
     epochs = 100
-    batch_size = 32
+    batch_size = 16
     gpu = True
     input_shapes = [x.shape[1:] for x in X]
     if cv is int:
@@ -556,3 +594,67 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_f
                                               batch_size=batch_size, verbose=2)
             metrics.write_result(results, labels[idx], output_file)
         output_file.write("\n")
+
+def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", output_folder=None):
+    if modalities is str:
+        if modalities.endswith(".npy"):
+            loaded_array = np.load(modalities)
+            X = loaded_array[0]
+            Y = loaded_array[1]
+    else:
+        if seq_reduction == "padding":
+            length = reduction
+        else:
+            length = None
+        X = []
+        Y = []
+        for stream_idx, stream in enumerate(modalities):
+            X_m = []
+            Y_m = []
+            for view in stream:
+                X_idx, Y_idx = sequences.get_input_sequences(view, length)
+                X_m.append(X_idx)
+                Y_m.append(Y_idx)
+            X.append(X_m)
+            Y.append(Y_m)
+        if seq_reduction == "padding":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding(modality)
+        elif seq_reduction == "kmeans":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.kmeans_seq_reduction(modality, k=reduction)
+        elif seq_reduction == "pad_means":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding_means(modality, reduction)
+        elif seq_reduction == "sync_kmeans":
+            for mod_idx, modality in enumerate(X):
+                modality = sequences.synchronize_views(modality)
+                X[mod_idx] = sequences.kmeans_sync_seq_reduction(modality, k=reduction)
+
+    if output_folder is None:
+        output_folder = os.path.split(os.path.split(modalities[0][0])[0])[0]
+
+    hu = 50
+    dropout = None
+    epochs = 100
+    batch_size = 16
+    gpu = True
+    input_shapes = [[x.shape[1:] for x in X_m] for X_m in X]
+    X = [item for sublist in X for item in sublist]
+    Y = [item for sublist in Y for item in sublist]
+    if cv is int:
+        folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
+    else:
+        folds = cv
+
+    model = create_multistream_hierarchical_model(input_shapes, hu, 1, dropout, gpu)
+    streams = [", ".join([os.path.split(i)[1] for i in modality]) for modality in modalities]
+    with open(os.path.join(output_folder, "hierarchical_blstm_with_context.txt"), "w+") as output_file:
+        header = "Database: %s\nData: %s\nHidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s, Seq. reduction: %s, %s\n" % (
+            os.path.split(os.path.split(modalities[0][0])[0])[0], " + ".join(streams), hu, epochs, batch_size,
+            dropout, seq_reduction, reduction)
+        print(header.strip())
+        output_file.write(header)
+        results = metrics.cross_val_score(model, X, Y, scoring="roc_auc", cv=folds, epochs=epochs,
+                                          batch_size=batch_size, verbose=2)
+        metrics.write_result(results, "HBLSTMC", output_file)
