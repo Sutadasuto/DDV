@@ -342,8 +342,9 @@ def create_multistream_attention_context_blstm(input_shapes, hu=20, output=1, dr
     return model
 
 
-def create_multistream_hierarchical_model(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+def architecture_1(input_shapes, hu=20, output=1, dropout=None, gpu=True):
 
+    name = "Hierarchical Parallel Multistream BLSTMs with context"
     mod_seq = []
     mod_representation = []
     for input_shape in input_shapes:
@@ -377,7 +378,7 @@ def create_multistream_hierarchical_model(input_shapes, hu=20, output=1, dropout
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
                   metrics=['accuracy'])
-    return model
+    return model, name
 
 
 def test(gpu=False):
@@ -474,7 +475,8 @@ def single_modality(input_data, cv=10):
             results_attention_context.mean() * 100, results_attention_context.std() * 100))
 
 
-def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_folder=None):
+def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_folder=None, hu=50, dropout=None,
+              epochs=100, batch_size=16, gpu=True):
     # Input can be either a folder containing csv files or a .npy file
     if inputs is str:
         if inputs.endswith(".npy"):
@@ -506,14 +508,10 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_f
     if output_folder is None:
         output_folder = os.path.split(inputs[0])[0]
 
-    hu = 50
-    dropout = None
-    epochs = 100
-    batch_size = 16
-    gpu = True
     input_shapes = [x.shape[1:] for x in X]
-    if cv is int:
+    if type(cv) is int:
         folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
+        folds = folds.split(X[0], Y[0])
     else:
         folds = cv
 
@@ -595,7 +593,9 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_f
             metrics.write_result(results, labels[idx], output_file)
         output_file.write("\n")
 
-def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", output_folder=None):
+
+def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", output_folder=None, hu=50, dropout=None,
+              epochs=100, batch_size=16, gpu=True):
     if modalities is str:
         if modalities.endswith(".npy"):
             loaded_array = np.load(modalities)
@@ -634,22 +634,18 @@ def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", outpu
     if output_folder is None:
         output_folder = os.path.split(os.path.split(modalities[0][0])[0])[0]
 
-    hu = 50
-    dropout = None
-    epochs = 100
-    batch_size = 16
-    gpu = True
     input_shapes = [[x.shape[1:] for x in X_m] for X_m in X]
     X = [item for sublist in X for item in sublist]
     Y = [item for sublist in Y for item in sublist]
-    if cv is int:
+    if type(cv) is int:
         folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
+        folds = folds.split(X[0], Y[0])
     else:
         folds = cv
 
-    model = create_multistream_hierarchical_model(input_shapes, hu, 1, dropout, gpu)
+    model, name = architecture_1(input_shapes, hu, 1, dropout, gpu)
     streams = [", ".join([os.path.split(i)[1] for i in modality]) for modality in modalities]
-    with open(os.path.join(output_folder, "hierarchical_blstm_with_context_%s_%s.txt" % (seq_reduction, reduction)), "w+") as output_file:
+    with open(os.path.join(output_folder, "%s_%s_%s.txt" % (name, seq_reduction, reduction)), "w+") as output_file:
         header = "Database: %s\nData: %s\nHidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s, Seq. reduction: %s, %s\n" % (
             os.path.split(os.path.split(modalities[0][0])[0])[0], " + ".join(streams), hu, epochs, batch_size,
             dropout, seq_reduction, reduction)
@@ -657,4 +653,4 @@ def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", outpu
         output_file.write(header)
         results = metrics.cross_val_score(model, X, Y, scoring="roc_auc", cv=folds, epochs=epochs,
                                           batch_size=batch_size, verbose=2)
-        metrics.write_result(results, "HBLSTMC", output_file)
+        metrics.write_result(results, name, output_file)

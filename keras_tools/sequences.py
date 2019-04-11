@@ -3,6 +3,7 @@ from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.preprocessing import LabelEncoder
 
+import multiprocessing
 import os
 import pandas
 
@@ -53,7 +54,7 @@ def get_input_sequences(input_data, padding="avg"):
 
 def kmeans_frame_selection(frames, k=20, seed=0):
 
-    kmeans = KMeans(n_clusters=k, random_state=seed).fit(frames)
+    kmeans = KMeans(n_clusters=k, random_state=seed, n_jobs=int(multiprocessing.cpu_count()/2)).fit(frames)
     centers = kmeans.cluster_centers_
     frame_numbers = []
     for center in centers:

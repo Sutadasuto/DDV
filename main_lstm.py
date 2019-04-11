@@ -36,12 +36,15 @@ visual_views = utilities.get_modality_views(os.path.join(database_folder + "_",
 acoustical_views = utilities.get_modality_views(os.path.join(database_folder + "_",
                                                              "covarep_frames"
                                                              ))
+hu = 50
+dropout = None
+epochs = 100
+batch_size = 16
+gpu = True
+seq_reduction_method = "sync_kmeans"
+reduction_parameter = 100
 
-# lstm.test()
-# my_lstm = lstm.basic_binary_lstm_cv(folder)
-# lstm.modalities((covarep_target_folder, of_target_folder), custom_folds)
-# blstm.modalities((covarep_target_folder, of_target_folder), custom_folds)
-# lstm.modalities((covarep_target_folder, of_target_folder), custom_folds, "kmeans", 20)
-# blstm.modalities((covarep_target_folder, of_target_folder), custom_folds, "kmeans", 20)
-lstm.modalities(visual_views, custom_folds, "kmeans", 20, database_folder + "_")
-# blstm.modalities(visual_views, custom_folds, "kmeans", 20, database_folder + "_")
+blstm.modalities(acoustical_views + visual_views, custom_folds, seq_reduction_method, reduction_parameter, database_folder + "_",
+                hu, dropout, epochs, batch_size, gpu)
+# blstm.modalities([acoustical_views, visual_views], custom_folds, seq_reduction_method, reduction_parameter, database_folder + "_",
+#                 hu, dropout, epochs, batch_size, gpu)
