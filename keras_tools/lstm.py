@@ -545,7 +545,7 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_f
         folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
         folds = [fold for fold in folds.split(X[0], Y[0])]
     elif cv == "loo":
-        folds = [fold for fold in LeaveOneOut().split(a)]
+        folds = [fold for fold in LeaveOneOut().split(X[0])]
     else:
         folds = cv
 
@@ -675,7 +675,7 @@ def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", outpu
         folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
         folds = [fold for fold in folds.split(X[0], Y[0])]
     elif cv == "loo":
-        folds = [fold for fold in LeaveOneOut().split(a)]
+        folds = [fold for fold in LeaveOneOut().split(X[0])]
     else:
         folds = cv
 
