@@ -11,14 +11,14 @@ def triplet_loss_function():
     a=0
 
 
-def get_triplets(X, Y):
+def get_triplets(x, y):
 
-    labels = list(set(Y))
+    labels = list(set(y))
 
     instance_sets = []
 
     for label in labels:
-        instance_sets.append(list(np.where(Y==label)[0]))
+        instance_sets.append(list(np.where(y==label)[0]))
 
     triplets = []
     for label in range(len(instance_sets)):
@@ -32,14 +32,14 @@ def get_triplets(X, Y):
             for instance in instance_sets[label + (-1)**label]:
                 triplets.append(pair + [instance])
 
-    new_X = []
+    X = []
     for triplet in triplets:
         list_4d = []
         for instance in triplet:
-            list_4d.append(X[instance, :, :])
-        new_X.append(np.array(list_4d))
+            list_4d.append(x[instance, :, :])
+        X.append(np.array(list_4d))
 
-    return np.array(new_X)
+    return np.array(X)
 
 
 def create_multistream_model(X, rnn_generator, **kwargs):

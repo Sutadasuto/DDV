@@ -44,7 +44,7 @@ gpu = True
 seq_reduction_method = "sync_kmeans"
 reduction_parameter = 100
 
-blstm.modalities(acoustical_views + visual_views, custom_folds, seq_reduction_method, reduction_parameter, database_folder + "_",
-                hu, dropout, epochs, batch_size, gpu)
-# blstm.modalities([acoustical_views, visual_views], custom_folds, seq_reduction_method, reduction_parameter, database_folder + "_",
+# blstm.modalities(acoustical_views + visual_views, custom_folds, seq_reduction_method, reduction_parameter, database_folder + "_",
 #                 hu, dropout, epochs, batch_size, gpu)
+lstm.my_method([acoustical_views, visual_views], custom_folds, seq_reduction_method, reduction_parameter, database_folder + "_",
+                hu, dropout, epochs, batch_size, gpu)

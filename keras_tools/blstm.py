@@ -381,6 +381,41 @@ def architecture_1(input_shapes, hu=20, output=1, dropout=None, gpu=True):
     return model, name
 
 
+def architecture_2(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+
+    name = "Multiview BLSTMs with context"
+    seq_shape = []
+    n = 0
+    for input_shape in input_shapes:
+        for shape in input_shape:
+            seq_shape.append(shape)
+        n += len(input_shape)
+
+    # Create a BLSTM for each view
+    seq = []
+    views = []
+    for i in range(n):
+        input_data = Input(seq_shape[i])
+        if gpu:
+            blstm = Bidirectional(CuDNNLSTM(hu, return_sequences=True), input_shape=seq_shape[i])(input_data)
+        else:
+            blstm = Bidirectional(LSTM(hu, return_sequences=True), input_shape=seq_shape[i])(input_data)
+        if dropout is float:
+            blstm = Dropout(dropout)(blstm)
+        # Add attention in each stream
+        result, attention = AttentionWithContext(return_attention=True)(blstm)
+        view_representation = Dense(output, activation="tanh")(result)
+        seq.append(input_data)
+        views.append(view_representation)
+    video_representation = keras.layers.concatenate(views)
+    dense_out = Dense(output, activation="sigmoid")(video_representation)
+    model = Model(seq, dense_out)
+    model.compile(loss='mean_squared_error',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model, name
+
+
 def test(gpu=False):
     seq_length = 5
     X = [[i + j for j in range(seq_length)] for i in range(100)]
@@ -643,14 +678,25 @@ def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", outpu
     else:
         folds = cv
 
-    model, name = architecture_1(input_shapes, hu, 1, dropout, gpu)
+    architectures = [architecture_1]
+    models = []
+    names = []
     streams = [", ".join([os.path.split(i)[1] for i in modality]) for modality in modalities]
+    from keras.utils import plot_model
+    for architecture in architectures:
+        model, name = architecture(input_shapes, hu, 1, dropout, gpu)
+        plot_model(model, to_file=os.path.join(output_folder, '%s_%s_%s.png' % (name, seq_reduction, reduction)),
+                   show_shapes=True, show_layer_names=False)
+        models.append(model)
+        names.append(name)
     with open(os.path.join(output_folder, "%s_%s_%s.txt" % (name, seq_reduction, reduction)), "w+") as output_file:
         header = "Database: %s\nData: %s\nHidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s, Seq. reduction: %s, %s\n" % (
             os.path.split(os.path.split(modalities[0][0])[0])[0], " + ".join(streams), hu, epochs, batch_size,
             dropout, seq_reduction, reduction)
         print(header.strip())
         output_file.write(header)
-        results = metrics.cross_val_score(model, X, Y, scoring="roc_auc", cv=folds, epochs=epochs,
-                                          batch_size=batch_size, verbose=2)
-        metrics.write_result(results, name, output_file)
+        for model, name in zip(models, names):
+            results = metrics.cross_val_score(model, X, Y, scoring="roc_auc", cv=folds, epochs=epochs,
+                                              batch_size=batch_size, verbose=2)
+            print(header.strip())
+            metrics.write_result(results, name, output_file)
