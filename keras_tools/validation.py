@@ -1,3 +1,5 @@
+from keras import backend as K
+
 import keras.models
 import numpy as np
 import sklearn.metrics as metrics
@@ -40,6 +42,8 @@ def cross_val_score(model, X, Y, cv=10, scoring="accuracy", **kwargs):
         elif scoring == "roc_auc":
             result = metrics.roc_auc_score(Y_test, Y_pred)
         results.append(result)
+        if K.backend() == 'tensorflow':
+            K.clear_session()
     print("Done  %s out of  %s | elapsed: %smin finished" % (
         len(folds), len(folds), sec_2_minutes(time.time() - beginning)
     ))
