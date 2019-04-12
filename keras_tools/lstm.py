@@ -544,6 +544,7 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_f
     if type(cv) is int:
         folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
         folds = folds.split(X[0], Y[0])
+        folds = [fold for fold in folds]
     else:
         folds = cv
 
@@ -672,6 +673,7 @@ def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", outpu
     if type(cv) is int:
         folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
         folds = folds.split(X[0], Y[0])
+        folds = [fold for fold in folds]
     else:
         folds = cv
 
