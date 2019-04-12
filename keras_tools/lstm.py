@@ -14,7 +14,7 @@ from keras.models import Sequential
 from keras.utils import plot_model
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras_tools.attention_layers import Attention, AttentionWithContext
-from sklearn.model_selection import cross_val_score, StratifiedKFold
+from sklearn.model_selection import cross_val_score, StratifiedKFold, LeaveOneOut
 
 import copy
 import keras
@@ -543,8 +543,9 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_f
     input_shapes = [x.shape[1:] for x in X]
     if type(cv) is int:
         folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
-        folds = folds.split(X[0], Y[0])
-        folds = [fold for fold in folds]
+        folds = [fold for fold in folds.split(X[0], Y[0])]
+    elif type == "loo":
+        folds = [fold for fold in LeaveOneOut().split(a)]
     else:
         folds = cv
 
@@ -672,8 +673,9 @@ def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", outpu
     Y = [item for sublist in Y for item in sublist]
     if type(cv) is int:
         folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
-        folds = folds.split(X[0], Y[0])
-        folds = [fold for fold in folds]
+        folds = [fold for fold in folds.split(X[0], Y[0])]
+    elif type == "loo":
+        folds = [fold for fold in LeaveOneOut().split(a)]
     else:
         folds = cv
 
