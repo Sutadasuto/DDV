@@ -1,4 +1,7 @@
+####
+# Ensuring tensorflow backend
 import os
+os.environ['KERAS_BACKEND'] = 'tensorflow'
 
 import keras_tools.lstm as lstm
 import keras_tools.blstm as blstm
@@ -13,13 +16,13 @@ from tools import config
 # folder = "/media/sutadasuto/OS/Users/Sutadasuto/Google Drive/INAOE/Thesis/Real-life_Deception_Detection_2016/Clips_/covarep_features"
 # folder = "/media/winbuntu/google-drive/INAOE/Thesis/SpanishDatabase/Aborto_Amigo_/covarep_features"
 
-dataset_name = "court_full"
+dataset_name = "court_full_16"
 print("\n****\nWorking the %s database\n****\n" % dataset_name)
 database_folder, plot_title, transcripts_folder, audios_folder, \
 of_target_folder, covarep_target_folder, datasets_folder, complementarity_folder \
     = config.config_database_variables(dataset_name)
 
-folds = 10
+folds = 2
 custom_folds, custom_dicts = sa.get_cross_iterable(
     sa.get_dict(os.path.join(database_folder, "subjects.txt")),
     folds, processedDataFolder=datasets_folder
@@ -44,7 +47,7 @@ gpu = True
 seq_reduction_method = "sync_kmeans"
 reduction_parameter = 100
 
-# blstm.modalities(acoustical_views + visual_views, custom_folds, seq_reduction_method, reduction_parameter, database_folder + "_",
+# lstm.modalities(acoustical_views + visual_views, custom_folds, seq_reduction_method, reduction_parameter, database_folder + "_",
 #                 hu, dropout, epochs, batch_size, gpu)
-lstm.my_method([acoustical_views, visual_views], custom_folds, seq_reduction_method, reduction_parameter, database_folder + "_",
+lstm.my_method([acoustical_views, visual_views], "loo", seq_reduction_method, reduction_parameter, database_folder + "_",
                 hu, dropout, epochs, batch_size, gpu)

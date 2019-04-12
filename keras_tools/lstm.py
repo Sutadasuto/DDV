@@ -628,8 +628,9 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_f
             metrics.write_result(results, labels[idx], output_file)
         output_file.write("\n")
 
+
 def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", output_folder=None, hu=50, dropout=None,
-              epochs=100, batch_size=16, gpu=True):
+              epochs=100, batch_size=16, gpu=True, plot=True):
     if modalities is str:
         if modalities.endswith(".npy"):
             loaded_array = np.load(modalities)
@@ -683,21 +684,21 @@ def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", outpu
     models = []
     names = []
     streams = [", ".join([os.path.split(i)[1] for i in modality]) for modality in modalities]
-    from keras.utils import plot_model
-    for architecture in architectures:
-        model, name = architecture(input_shapes, hu, 1, dropout, gpu)
-        plot_model(model, to_file=os.path.join(output_folder, '%s_%s_%s.png' % (name, seq_reduction, reduction)),
-                   show_shapes=True, show_layer_names=False)
-        models.append(model)
-        names.append(name)
-    with open(os.path.join(output_folder, "%s_%s_%s.txt" % (name, seq_reduction, reduction)), "w+") as output_file:
+    if plot == True:
+        plot = output_folder
+    else:
+        plot = ""
+
+    with open(os.path.join(output_folder, "%s_%s_%s.txt" % ("fusions", seq_reduction, reduction)), "w+") as output_file:
         header = "Database: %s\nData: %s\nHidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s, Seq. reduction: %s, %s\n" % (
             os.path.split(os.path.split(modalities[0][0])[0])[0], " + ".join(streams), hu, epochs, batch_size,
             dropout, seq_reduction, reduction)
         print(header.strip())
         output_file.write(header)
-        for model, name in zip(models, names):
-            results = metrics.cross_val_score(model, X, Y, scoring="roc_auc", cv=folds, epochs=epochs,
-                                              batch_size=batch_size, verbose=2)
+        for architecture in architectures:
+            result, name = metrics.cross_val_score(architecture, X, Y, scoring="roc_auc", cv=folds,
+                                                   epochs=epochs, batch_size=batch_size, verbose=2,
+                                              input_shapes=input_shapes, hu=hu, output=1, dropout=dropout, gpu=gpu,
+                                                   plot=plot)
             print(header.strip())
-            metrics.write_result(results, name, output_file)
+            metrics.write_result(result, name, output_file)
