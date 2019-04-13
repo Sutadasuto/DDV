@@ -549,45 +549,32 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_f
     else:
         folds = cv
 
-    with open(os.path.join(output_folder, "lstm_results_modalities_%s_%s.txt" % (seq_reduction, reduction)), "w+") as output_file:
+    model_builders = [create_basic_lstm, create_basic_lstm_double_dense, create_attention_lstm,
+                      create_attention_context_lstm]
+    labels = ["Basic", "Double dense", "Attention", "Attention with context"]
+    with open(os.path.join(output_folder, "lstm_results_modalities_%s_%s.txt" % (seq_reduction, reduction)),
+              "w+") as output_file:
         for stream_idx in range(len(inputs)):
-            classifiers = []
-            classifiers.append(KerasClassifier(build_fn=create_basic_lstm, hu=hu, timesteps=X[stream_idx].shape[1],
+            classifiers = [KerasClassifier(build_fn=builder, hu=hu, timesteps=X[stream_idx].shape[1],
                                                data_dim=X[stream_idx].shape[2], output=1, dropout=dropout, gpu=gpu,
-                                               epochs=epochs, batch_size=batch_size, verbose=2))
-            classifiers.append(KerasClassifier(build_fn=create_basic_lstm, hu=hu, timesteps=X[stream_idx].shape[1],
-                                               data_dim=X[stream_idx].shape[2], output=1, dropout=dropout, gpu=gpu,
-                                               epochs=epochs, batch_size=batch_size, verbose=2))
-            classifiers.append(KerasClassifier(build_fn=create_attention_lstm, hu=hu, timesteps=X[stream_idx].shape[1],
-                                               data_dim=X[stream_idx].shape[2], output=1, dropout=dropout, gpu=gpu,
-                                               epochs=epochs, batch_size=batch_size, verbose=2))
-            classifiers.append(
-                KerasClassifier(build_fn=create_attention_context_lstm, hu=hu, timesteps=X[stream_idx].shape[1],
-                                data_dim=X[stream_idx].shape[2], output=1, dropout=dropout, gpu=gpu,
-                                epochs=epochs, batch_size=batch_size, verbose=2))
+                                               epochs=epochs, batch_size=batch_size, verbose=2)
+                           for builder in model_builders]
             header = "Database: %s\nData: %s\nHidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s, Seq. reduction: %s, %s\n" % (
                 os.path.split(inputs[stream_idx])[0], os.path.split(inputs[stream_idx])[1], hu, epochs, batch_size,
                 dropout, seq_reduction, reduction)
-            print(header.strip())
             output_file.write(header)
-            labels = ["Basic", "Double dense", "Attention", "Attention with context"]
             for idx, classifier in enumerate(classifiers):
                 results = cross_val_score(classifier, X[stream_idx], Y[stream_idx], scoring="roc_auc", cv=folds,
                                           verbose=1)
+                print(header.strip())
                 metrics.write_result(results, labels[idx], output_file)
             output_file.write("\n")
 
         # Multidata
-        classifiers = []
-        classifiers.append(
-            create_multidata_basic_lstm(hu=hu, input_shapes=input_shapes, output=1, dropout=dropout, gpu=gpu))
-        classifiers.append(
-            create_multidata_basic_lstm(hu=hu, input_shapes=input_shapes, output=1, dropout=dropout, gpu=gpu))
-        classifiers.append(
-            create_multidata_attention_lstm(hu=hu, input_shapes=input_shapes, output=1, dropout=dropout, gpu=gpu))
-        classifiers.append(
-            create_multidata_attention_context_lstm(hu=hu, input_shapes=input_shapes, output=1, dropout=dropout,
-                                                    gpu=gpu))
+        model_builders = [create_multidata_basic_lstm, create_multidata_basic_lstm_double_dense,
+                          create_multidata_attention_lstm, create_multidata_attention_context_lstm]
+        labels = ["Early fusion Basic", "Early fusion Double dense", "Early fusion Attention",
+                  "Early fusion Attention with context"]
 
         streams = [os.path.split(i)[1] for i in inputs]
         header = "Database: %s\nData: %s\nHidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s, Seq. reduction: %s, %s\n" % (
@@ -595,36 +582,33 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_f
             dropout, seq_reduction, reduction)
         print(header.strip())
         output_file.write(header)
-        labels = ["Early fusion Basic", "Early fusion Double dense", "Early fusion Attention",
-                  "Early fusion Attention with context"]
-        for idx, classifier in enumerate(classifiers):
-            results = metrics.cross_val_score(classifier, X, Y, scoring="roc_auc", cv=folds, epochs=epochs,
-                                              batch_size=batch_size, verbose=2)
+
+        for idx, classifier in enumerate(model_builders):
+            results, name = metrics.cross_val_score(classifier, X, Y, scoring="roc_auc", cv=folds, epochs=epochs,
+                                              batch_size=batch_size, verbose=2, plot="",
+                                              hu=hu, input_shapes=input_shapes, output=1, dropout=dropout, gpu=gpu)
+            print(header.strip())
             metrics.write_result(results, labels[idx], output_file)
         output_file.write("\n")
 
         # Multistream
-        classifiers = []
-        classifiers.append(
-            create_multistream_basic_lstm(hu=hu, input_shapes=input_shapes, output=1, dropout=dropout, gpu=gpu))
-        classifiers.append(
-            create_multistream_basic_lstm(hu=hu, input_shapes=input_shapes, output=1, dropout=dropout, gpu=gpu))
-        classifiers.append(
-            create_multistream_attention_lstm(hu=hu, input_shapes=input_shapes, output=1, dropout=dropout, gpu=gpu))
-        classifiers.append(
-            create_multistream_attention_context_lstm(hu=hu, input_shapes=input_shapes, output=1, dropout=dropout,
-                                                      gpu=gpu))
+        model_builders = [create_multistream_basic_lstm, create_multistream_basic_lstm_double_dense,
+                          create_multistream_attention_lstm, create_multistream_attention_context_lstm]
+        labels = ["Late fusion Basic", "Late fusion Double dense", "Late fusion Attention",
+                  "Late fusion Attention with context"]
 
         header = "Database: %s\nData: %s\nHidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s, Seq. reduction: %s, %s\n" % (
             os.path.split(inputs[0])[0], " + ".join(streams), hu, epochs, batch_size,
             dropout, seq_reduction, reduction)
         print(header.strip())
         output_file.write(header)
-        labels = ["Late fusion Basic", "Late fusion Double dense", "Late fusion Attention",
-                  "Late fusion Attention with context"]
-        for idx, classifier in enumerate(classifiers):
-            results = metrics.cross_val_score(classifier, X, Y, scoring="roc_auc", cv=folds, epochs=epochs,
-                                              batch_size=batch_size, verbose=2)
+
+        for idx, classifier in enumerate(model_builders):
+            results, name = metrics.cross_val_score(classifier, X, Y, scoring="roc_auc", cv=folds, epochs=epochs,
+                                                    batch_size=batch_size, verbose=2, plot="",
+                                                    hu=hu, input_shapes=input_shapes, output=1, dropout=dropout,
+                                                    gpu=gpu)
+            print(header.strip())
             metrics.write_result(results, labels[idx], output_file)
         output_file.write("\n")
 

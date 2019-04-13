@@ -17,16 +17,28 @@ def cross_val_score(model_generator, X, Y, batch_size=None, epochs=1, verbose=1,
     folds = ml.check_cv(cv, Y_o)
 
     results = []
-    model, name = model_generator(**kwargs)
+    model_data = model_generator(**kwargs)
+    if type(model_data) is not tuple:
+        print("Model generator doesn't return a name. Returning model generator function as name.")
+        model = model_data
+        name = str(model_generator).split(" ")[1]
+    else:
+        model, name = model_data
     if plot != "":
         from keras.utils import plot_model
         plot_model(model, to_file=os.path.join(plot, '%s.png' % name),
                    show_shapes=True, show_layer_names=False)
     initial_weights = model.get_weights()
+    if K.backend() == 'tensorflow':
+        K.clear_session()
     beginning = time.time()
     for fold_num, fold in enumerate(folds, 1):
         now = time.time()
-        model, name = model_generator(**kwargs)
+        model_data = model_generator(**kwargs)
+        if type(model_data) is not tuple:
+            model = model_data
+        else:
+            model = model_data[0]
         model.set_weights(initial_weights)
         X_train = []
         for x in X:
