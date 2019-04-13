@@ -35,7 +35,7 @@ def create_basic_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gp
         model.add(LSTM(hu, input_shape=(timesteps, data_dim)))
     if dropout is float:
         model.add(Dropout(dropout))
-    model.add(Dense(output, kernel_initializer="normal", activation="sigmoid"))
+    model.add(Dense(output, activation="sigmoid"))
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
                   metrics=['accuracy'])
@@ -53,7 +53,7 @@ def create_basic_lstm_double_dense(hu=20, timesteps=1, data_dim=1, output=1, dro
     if dropout is float:
         model.add(Dropout(dropout))
     model.add(Dense(int(hu / 2)))
-    model.add(Dense(output, kernel_initializer="normal", activation="sigmoid"))
+    model.add(Dense(output, activation="sigmoid"))
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
                   metrics=['accuracy'])
@@ -71,7 +71,7 @@ def create_attention_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None
     if dropout is float:
         model.add(Dropout(dropout))
     model.add(Attention())
-    model.add(Dense(output, kernel_initializer="normal", activation="sigmoid"))
+    model.add(Dense(output, activation="sigmoid"))
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
                   metrics=['accuracy'])
@@ -89,7 +89,7 @@ def create_attention_context_lstm(hu=20, timesteps=1, data_dim=1, output=1, drop
     if dropout is float:
         model.add(Dropout(dropout))
     model.add(AttentionWithContext())
-    model.add(Dense(output, kernel_initializer="normal", activation="sigmoid"))
+    model.add(Dense(output, activation="sigmoid"))
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
                   metrics=['accuracy'])
@@ -116,7 +116,7 @@ def create_multidata_basic_lstm(input_shapes, hu=20, output=1, dropout=None, gpu
         lstm = LSTM(hu, input_shape=(input_shapes[0][0], input_shapes[0][1] + input_shapes[1][1]))(cat)
     if dropout is float:
         lstm = Dropout(dropout)(lstm)
-    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(lstm)
+    dense = Dense(output, activation="sigmoid")(lstm)
     model = Model(seq, dense)
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
@@ -145,7 +145,7 @@ def create_multidata_basic_lstm_double_dense(input_shapes, hu=20, output=1, drop
     if dropout is float:
         lstm = Dropout(dropout)(lstm)
     dense_1 = Dense(int(hu / 2))(lstm)
-    dense_2 = Dense(output, kernel_initializer="normal", activation="sigmoid")(dense_1)
+    dense_2 = Dense(output, activation="sigmoid")(dense_1)
     model = Model(seq, dense_2)
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
@@ -176,7 +176,7 @@ def create_multidata_attention_lstm(input_shapes, hu=20, output=1, dropout=None,
     if dropout is float:
         lstm = Dropout(dropout)(lstm)
     result, attention = Attention(return_attention=True)(lstm)
-    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(result)
+    dense = Dense(output, activation="sigmoid")(result)
     model = Model(seq, dense)
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
@@ -207,7 +207,7 @@ def create_multidata_attention_context_lstm(input_shapes, hu=20, output=1, dropo
     if dropout is float:
         lstm = Dropout(dropout)(lstm)
     result, attention = AttentionWithContext(return_attention=True)(lstm)
-    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(result)
+    dense = Dense(output, activation="sigmoid")(result)
     model = Model(seq, dense)
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
@@ -237,7 +237,7 @@ def create_multistream_basic_lstm(input_shapes, hu=20, output=1, dropout=None, g
         lstms.append(lstm)
     # Concatenate independent streams
     cat = keras.layers.concatenate(lstms, axis=-1)
-    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(cat)
+    dense = Dense(output, activation="sigmoid")(cat)
     model = Model(seq, dense)
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
@@ -268,7 +268,7 @@ def create_multistream_basic_lstm_double_dense(input_shapes, hu=20, output=1, dr
     # Concatenate independent streams
     cat = keras.layers.concatenate(lstms, axis=-1)
     dense_1 = Dense(int(hu / 2))(cat)
-    dense_2 = Dense(output, kernel_initializer="normal", activation="sigmoid")(dense_1)
+    dense_2 = Dense(output, activation="sigmoid")(dense_1)
     model = Model(seq, dense_2)
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
@@ -300,7 +300,7 @@ def create_multistream_attention_lstm(input_shapes, hu=20, output=1, dropout=Non
         lstms.append(result)
     # Concatenate independent streams
     cat = keras.layers.concatenate(lstms, axis=-1)
-    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(cat)
+    dense = Dense(output, activation="sigmoid")(cat)
     model = Model(seq, dense)
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
@@ -332,7 +332,7 @@ def create_multistream_attention_context_lstm(input_shapes, hu=20, output=1, dro
         lstms.append(result)
     # Concatenate independent streams
     cat = keras.layers.concatenate(lstms, axis=-1)
-    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(cat)
+    dense = Dense(output, activation="sigmoid")(cat)
     model = Model(seq, dense)
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
@@ -371,7 +371,7 @@ def architecture_1(input_shapes, hu=20, output=1, dropout=None, gpu=True):
         mod_seq.append(seq)
         mod_representation.append(merge)
     video_representation = keras.layers.add(mod_representation)
-    dense = Dense(output, kernel_initializer="normal", activation="sigmoid")(video_representation)
+    dense = Dense(output, activation="sigmoid")(video_representation)
     model = Model([item for sublist in mod_seq for item in sublist], dense)
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
@@ -414,6 +414,152 @@ def architecture_2(input_shapes, hu=20, output=1, dropout=None, gpu=True):
     return model, name
 
 
+def architecture_3(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+
+    name = "Multiview LSTMs with attention"
+    seq_shape = []
+    n = 0
+    for input_shape in input_shapes:
+        for shape in input_shape:
+            seq_shape.append(shape)
+        n += len(input_shape)
+
+    # Create a LSTM for each view
+    seq = []
+    views = []
+    for i in range(n):
+        input_data = Input(seq_shape[i])
+        if gpu:
+            lstm = CuDNNLSTM(hu, input_shape=seq_shape[i], return_sequences=True)(input_data)
+        else:
+            lstm = LSTM(hu, input_shape=seq_shape[i], return_sequences=True)(input_data)
+        if dropout is float:
+            lstm = Dropout(dropout)(lstm)
+        # Add attention in each stream
+        result, attention = Attention(return_attention=True)(lstm)
+        view_representation = Dense(output, activation="tanh")(result)
+        seq.append(input_data)
+        views.append(view_representation)
+    video_representation = keras.layers.concatenate(views)
+    dense_out = Dense(output, activation="sigmoid")(video_representation)
+    model = Model(seq, dense_out)
+    model.compile(loss='mean_squared_error',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model, name
+
+
+def architecture_4(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+
+    name = "Multiview LSTMs with context binary loss"
+    seq_shape = []
+    n = 0
+    for input_shape in input_shapes:
+        for shape in input_shape:
+            seq_shape.append(shape)
+        n += len(input_shape)
+
+    # Create a LSTM for each view
+    seq = []
+    views = []
+    for i in range(n):
+        input_data = Input(seq_shape[i])
+        if gpu:
+            lstm = CuDNNLSTM(hu, input_shape=seq_shape[i], return_sequences=True)(input_data)
+        else:
+            lstm = LSTM(hu, input_shape=seq_shape[i], return_sequences=True)(input_data)
+        if dropout is float:
+            lstm = Dropout(dropout)(lstm)
+        # Add attention in each stream
+        result, attention = AttentionWithContext(return_attention=True)(lstm)
+        view_representation = Dense(output, activation="tanh")(result)
+        seq.append(input_data)
+        views.append(view_representation)
+    video_representation = keras.layers.concatenate(views)
+    dense_out = Dense(output, activation="sigmoid")(video_representation)
+    model = Model(seq, dense_out)
+    model.compile(loss='mean_squared_error',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model, name
+
+
+def architecture_5(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+
+    name = "Multiview LSTMs with attention binary loss"
+    seq_shape = []
+    n = 0
+    for input_shape in input_shapes:
+        for shape in input_shape:
+            seq_shape.append(shape)
+        n += len(input_shape)
+
+    # Create a LSTM for each view
+    seq = []
+    views = []
+    for i in range(n):
+        input_data = Input(seq_shape[i])
+        if gpu:
+            lstm = CuDNNLSTM(hu, input_shape=seq_shape[i], return_sequences=True)(input_data)
+        else:
+            lstm = LSTM(hu, input_shape=seq_shape[i], return_sequences=True)(input_data)
+        if dropout is float:
+            lstm = Dropout(dropout)(lstm)
+        # Add attention in each stream
+        result, attention = Attention(return_attention=True)(lstm)
+        view_representation = Dense(output, activation="tanh")(result)
+        seq.append(input_data)
+        views.append(view_representation)
+    video_representation = keras.layers.concatenate(views)
+    dense_out = Dense(output, activation="sigmoid")(video_representation)
+    model = Model(seq, dense_out)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model, name
+
+
+def architecture_6(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+
+    name = "Multiview Hierarchical LSTMs with context"
+    mod_seq = []
+    mod_representation = []
+    for input_shape in input_shapes:
+        seq_shape = []
+        for shape in input_shape:
+            seq_shape.append(shape)
+        n = len(input_shape)
+
+        # Create a LSTM for each view
+        seq = []
+        views = []
+        for i in range(n):
+            input_data = Input(seq_shape[i])
+            if gpu:
+                lstm = CuDNNLSTM(hu, input_shape=input_shape[i], return_sequences=True)(input_data)
+            else:
+                lstm = LSTM(hu, input_shape=input_shape[i], return_sequences=True)(input_data)
+            if dropout is float:
+                lstm = Dropout(dropout)(lstm)
+            # Add attention in each stream
+            result, attention = AttentionWithContext(return_attention=True)(lstm)
+            view_rep = Dense(output, activation="tanh")(result)
+            seq.append(input_data)
+            views.append(view_rep)
+        # Concatenate independent streams
+        merge = keras.layers.concatenate(views)
+        mod = Dense(output, activation="tanh")(merge)
+        mod_seq.append(seq)
+        mod_representation.append(mod)
+    video_representation = keras.layers.concatenate(mod_representation)
+    dense = Dense(output, activation="sigmoid")(video_representation)
+    model = Model([item for sublist in mod_seq for item in sublist], dense)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model, name
+
+
 def test(gpu=False):
     seq_length = 5
     X = [[i + j for j in range(seq_length)] for i in range(100)]
@@ -432,8 +578,8 @@ def test(gpu=False):
         model.add(CuDNNLSTM(8, input_shape=(5, 1), return_sequences=False))
     else:
         model.add(LSTM(8, input_shape=(5, 1), return_sequences=False))
-    model.add(Dense(2, kernel_initializer="normal", activation="linear"))
-    model.add(Dense(1, kernel_initializer="normal", activation="linear"))
+    model.add(Dense(2, activation="linear"))
+    model.add(Dense(1, activation="linear"))
     model.compile(loss="mse", optimizer="adam", metrics=["accuracy"])
     model.fit(X, y, epochs=2000, batch_size=5, validation_split=0.05, verbose=1);
     scores = model.evaluate(X, y, verbose=1, batch_size=5)
@@ -664,7 +810,7 @@ def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", outpu
     else:
         folds = cv
 
-    architectures = [architecture_1, architecture_2]
+    architectures = [architecture_1, architecture_2, architecture_3, architecture_4, architecture_5, architecture_6]
     models = []
     names = []
     streams = [", ".join([os.path.split(i)[1] for i in modality]) for modality in modalities]
