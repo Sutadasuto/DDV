@@ -79,7 +79,7 @@ def kmeans_seq_reduction(dataset, k=20, seed=0):
             instance_length = instance.shape[0]
             new_instance, frames = kmeans_frame_selection(instance, min(k, instance_length), seed)
             new_dataset.append(new_instance)
-        dataset[stream_idx] = np.array(new_dataset)
+        dataset[stream_idx] = sequence.pad_sequences(new_dataset, maxlen=k, dtype="float64")
     return dataset
 
 
@@ -95,7 +95,7 @@ def kmeans_sync_seq_reduction(dataset, k=20, seed=0):
         for stream_idx in range(len(dataset)):
             dataset[stream_idx][instance_idx] = dataset[stream_idx][instance_idx][frames]
     for idx, stream in enumerate(dataset):
-        dataset[idx] = np.array(stream.tolist())
+        dataset[idx] = sequence.pad_sequences(stream.tolist(), maxlen=k, dtype="float64")
     return dataset
 
 
