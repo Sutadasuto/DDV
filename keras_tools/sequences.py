@@ -90,7 +90,8 @@ def kmeans_sync_seq_reduction(dataset, k=20, seed=0):
         for stream in dataset:
             view_vectors.append(stream[instance_idx])
         instance = np.concatenate(tuple(view_vectors), axis=1)
-        conc_instance, frames = kmeans_frame_selection(instance, k, seed)
+        instance_length = instance.shape[0]
+        conc_instance, frames = kmeans_frame_selection(instance, min(k, instance_length), seed)
 
         for stream_idx in range(len(dataset)):
             dataset[stream_idx][instance_idx] = dataset[stream_idx][instance_idx][frames]
