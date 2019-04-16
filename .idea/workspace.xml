@@ -2,12 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d96072d4-6cda-422a-bc36-1ddf25629609" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/keras_tools/utilities.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/keras_tools/blstm.py" beforeDir="false" afterPath="$PROJECT_DIR$/keras_tools/blstm.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/keras_tools/lmnn.py" beforeDir="false" afterPath="$PROJECT_DIR$/keras_tools/lmnn.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/keras_tools/lstm.py" beforeDir="false" afterPath="$PROJECT_DIR$/keras_tools/lstm.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/keras_tools/sequences.py" beforeDir="false" afterPath="$PROJECT_DIR$/keras_tools/sequences.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/keras_tools/validation.py" beforeDir="false" afterPath="$PROJECT_DIR$/keras_tools/validation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main_lstm.py" beforeDir="false" afterPath="$PROJECT_DIR$/main_lstm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/plots.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/plots.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -18,49 +19,10 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="375">
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tools/multimodal_fusion.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="532">
-              <caret line="39" column="24" selection-start-line="39" selection-start-column="24" selection-end-line="39" selection-end-column="24" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/main_spanish.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="8008">
-              <caret line="311" column="13" selection-start-line="311" selection-start-column="13" selection-end-line="311" selection-end-column="13" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tools/plots.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="253">
-              <caret line="251" column="25" selection-start-line="251" selection-start-column="25" selection-end-line="251" selection-end-column="25" />
-              <folding>
-                <element signature="e#0#10#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/main_lstm.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="245">
-              <caret line="45" selection-start-line="45" selection-end-line="45" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="140">
+              <caret line="41" column="27" selection-start-line="41" selection-start-column="27" selection-end-line="41" selection-end-column="27" />
             </state>
           </provider>
         </entry>
@@ -68,17 +30,33 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/keras_tools/lstm.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="563">
-              <caret line="461" column="42" selection-start-line="461" selection-start-column="42" selection-end-line="461" selection-end-column="42" />
+            <state relative-caret-position="390">
+              <caret line="919" column="18" lean-forward="true" selection-start-line="919" selection-start-column="18" selection-end-line="919" selection-end-column="18" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/keras_tools/blstm.py">
+        <entry file="file://$PROJECT_DIR$/keras_tools/attention_layers.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="364">
-              <caret line="476" column="40" selection-start-line="476" selection-start-column="40" selection-end-line="476" selection-end-column="40" />
+            <state relative-caret-position="1254">
+              <caret line="106" column="26" selection-start-line="106" selection-start-column="26" selection-end-line="106" selection-end-column="26" />
+              <folding>
+                <element signature="e#146#516#0" />
+                <element signature="e#783#2319#0" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/keras_tools/lmnn.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="318">
+              <caret line="56" column="36" selection-start-line="56" selection-start-column="36" selection-end-line="56" selection-end-column="36" />
+              <folding>
+                <element signature="e#0#12#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -86,8 +64,11 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/keras_tools/validation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-705">
-              <caret line="13" selection-start-line="13" selection-end-line="13" />
+            <state relative-caret-position="272">
+              <caret line="62" column="50" lean-forward="true" selection-start-line="62" selection-start-column="50" selection-end-line="62" selection-end-column="50" />
+              <folding>
+                <element signature="e#0#30#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -95,20 +76,11 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/keras_tools/sequences.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="159">
-              <caret line="13" column="4" selection-start-line="13" selection-start-column="4" selection-end-line="15" selection-end-column="45" />
+            <state relative-caret-position="1012">
+              <caret line="56" column="87" selection-start-line="56" selection-start-column="87" selection-end-line="56" selection-end-column="87" />
               <folding>
                 <element signature="e#0#40#0" expanded="true" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/keras_tools/utilities.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="196">
-              <caret line="7" column="41" selection-start-line="7" selection-start-column="41" selection-end-line="7" selection-end-column="41" />
             </state>
           </provider>
         </entry>
@@ -124,42 +96,38 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>transcr</find>
-      <find>if not os</find>
-      <find>catego</find>
-      <find>def check</find>
-      <find>multidata</find>
+      <find>n_job</find>
+      <find>KM</find>
+      <find>create_multistream_hierarchical_model</find>
+      <find>my_me</find>
+      <find>archite</find>
+      <find>output_file</find>
+      <find>folds.spli</find>
+      <find>if cv</find>
+      <find>if type</find>
+      <find>if type(cv</find>
+      <find>elif type</find>
+      <find>elif ty</find>
+      <find>elif type == &quot;loo&quot;:</find>
+      <find>.split(a)</find>
+      <find>def modalities</find>
+      <find>def moda</find>
+      <find>, kernel_initializer=&quot;normal&quot;</find>
+      <find>return_sequences</find>
+      <find>self.return_sequences</find>
+      <find>outputs</find>
+      <find>_lstm</find>
+      <find>1_3</find>
+      <find>n_jo</find>
+      <find>num_videos</find>
+      <find>modalities</find>
       <find>lstm</find>
-      <find>_multida</find>
-      <find>def crea</find>
-      <find>keras_results</find>
-      <find>keras_results_modalities</find>
-      <find>def get_data</find>
-      <find>LabelEncoder</find>
-      <find>get_data</find>
-      <find>sequence</find>
-      <find>sequence.</find>
-      <find>_blstm</find>
-      <find>data</find>
-      <find>$</find>
-      <find>as o</find>
-      <find>.cro</find>
-      <find>&quot;</find>
-      <find>accoustic</find>
-      <find>acoust</find>
-      <find>double_De</find>
-      <find>Accoust</find>
-      <find>(len(</find>
-      <find>if no</find>
-      <find>plt.bar</find>
-      <find>for x i</find>
-      <find>in data</find>
+      <find>inputs</find>
+      <find>init</find>
+      <find>def fit</find>
+      <find>re_1</find>
     </findStrings>
     <replaceStrings>
-      <replace>covarep_target_folder</replace>
-      <replace>append(object_list)</replace>
-      <replace>train_view_data[-1] = sample_weights</replace>
-      <replace>print(&quot;Prediciton finished in&quot;, round(time.time() - now, 3), &quot;sec at&quot;, datetime.datetime.now().strftime(&quot;%Y-%m-%d %H:%M&quot;))</replace>
       <replace>time_stamped_pos</replace>
       <replace>Prediction</replace>
       <replace>n_jobs=2, prefer=&quot;threads&quot;</replace>
@@ -185,6 +153,11 @@
       <replace>acoustic</replace>
       <replace>acoust</replace>
       <replace>Acoust</replace>
+      <replace>architecture_1</replace>
+      <replace>elif cv == &quot;loo&quot;:</replace>
+      <replace>.split(X[0])</replace>
+      <replace>_blstm</replace>
+      <replace>n_samples</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -210,18 +183,18 @@
         <option value="$PROJECT_DIR$/tools/machine_learning.py" />
         <option value="$PROJECT_DIR$/keras_tools/attention_layers.py" />
         <option value="$PROJECT_DIR$/video/video_analysis.py" />
-        <option value="$PROJECT_DIR$/keras_tools/lmnn.py" />
-        <option value="$PROJECT_DIR$/keras_tools/sequences.py" />
-        <option value="$PROJECT_DIR$/keras_tools/validation.py" />
         <option value="$PROJECT_DIR$/main.py" />
         <option value="$PROJECT_DIR$/audio/audio_analysis.py" />
         <option value="$PROJECT_DIR$/tools/multimodal_fusion.py" />
         <option value="$PROJECT_DIR$/main_spanish.py" />
         <option value="$PROJECT_DIR$/tools/plots.py" />
-        <option value="$PROJECT_DIR$/keras_tools/lstm.py" />
+        <option value="$PROJECT_DIR$/keras_tools/utilities.py" />
+        <option value="$PROJECT_DIR$/keras_tools/sequences.py" />
         <option value="$PROJECT_DIR$/keras_tools/blstm.py" />
         <option value="$PROJECT_DIR$/main_lstm.py" />
-        <option value="$PROJECT_DIR$/keras_tools/utilities.py" />
+        <option value="$PROJECT_DIR$/keras_tools/lstm.py" />
+        <option value="$PROJECT_DIR$/keras_tools/validation.py" />
+        <option value="$PROJECT_DIR$/keras_tools/lmnn.py" />
       </list>
     </option>
   </component>
@@ -237,7 +210,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -274,11 +246,13 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../divide_videos" />
-    <property name="settings.editor.selected.configurable" value="vcs.Git" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -301,6 +275,27 @@
     </option>
   </component>
   <component name="RunManager" selected="Python.main_lstm">
+    <configuration name="lmnn" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="February19" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/keras_tools" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/keras_tools/lmnn.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="February19" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -367,6 +362,7 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.main_lstm" />
+        <item itemvalue="Python.lmnn" />
         <item itemvalue="Python.main_rostros" />
         <item itemvalue="Python.main" />
       </list>
@@ -389,13 +385,13 @@
     <frame x="0" y="34" width="1920" height="981" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.21353066" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.21191354" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.3381295" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.3290735" />
+      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.33372366" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -476,29 +472,14 @@
           <option name="timeStamp" value="199" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/keras_tools/lstm.py</url>
-          <line>246</line>
-          <option name="timeStamp" value="218" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/keras_tools/blstm.py</url>
-          <line>274</line>
+          <line>275</line>
           <option name="timeStamp" value="226" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/keras_tools/sequences.py</url>
-          <line>78</line>
-          <option name="timeStamp" value="227" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/keras_tools/validation.py</url>
-          <line>9</line>
-          <option name="timeStamp" value="228" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/main_lstm.py</url>
-          <line>45</line>
-          <option name="timeStamp" value="230" />
+          <url>file://$PROJECT_DIR$/keras_tools/lmnn.py</url>
+          <line>88</line>
+          <option name="timeStamp" value="309" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -512,6 +493,13 @@
   </component>
   <component name="debuggerHistoryManager">
     <expressions id="evaluateCodeFragment">
+      <expression>
+        <expression-string>header = &quot;Database: %s\nData: %s\nHidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s, Seq. reduction: %s, %s\n&quot; % (
+            os.path.split(os.path.split(modalities[0][0])[0])[0], &quot; + &quot;.join(streams), hu, epochs, batch_size,
+            dropout, seq_reduction, reduction)</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
+      </expression>
       <expression>
         <expression-string>metrics.roc_auc_score(preprocessing.label_binarize(labels[pair[1]], classes=list(reversed(classes))),
                                          preprocessing.label_binarize(predictedLabels,
@@ -560,62 +548,53 @@
     </expressions>
     <expressions id="evaluateExpression">
       <expression>
-        <expression-string>results.mean()</expression-string>
+        <expression-string>np.array(labels)</expression-string>
         <language-id>Python</language-id>
         <evaluation-mode>EXPRESSION</evaluation-mode>
       </expression>
       <expression>
-        <expression-string>results</expression-string>
+        <expression-string>np.array([bla.shape for bla in x])</expression-string>
         <language-id>Python</language-id>
         <evaluation-mode>EXPRESSION</evaluation-mode>
       </expression>
       <expression>
-        <expression-string>X[0].shape</expression-string>
+        <expression-string>np.array([bla.shape for bla in batch_data])</expression-string>
         <language-id>Python</language-id>
         <evaluation-mode>EXPRESSION</evaluation-mode>
       </expression>
       <expression>
-        <expression-string>frames[0]</expression-string>
+        <expression-string>[bla.shape for bla in batch_data]</expression-string>
         <language-id>Python</language-id>
         <evaluation-mode>EXPRESSION</evaluation-mode>
       </expression>
       <expression>
-        <expression-string>frames</expression-string>
+        <expression-string>getsizeof(triplets)</expression-string>
         <language-id>Python</language-id>
         <evaluation-mode>EXPRESSION</evaluation-mode>
       </expression>
       <expression>
-        <expression-string>frames[1]</expression-string>
+        <expression-string>from sys import getsizeof</expression-string>
         <language-id>Python</language-id>
         <evaluation-mode>EXPRESSION</evaluation-mode>
       </expression>
       <expression>
-        <expression-string>frames.shape</expression-string>
+        <expression-string>getsizeof(initial_weights)</expression-string>
         <language-id>Python</language-id>
         <evaluation-mode>EXPRESSION</evaluation-mode>
       </expression>
       <expression>
-        <expression-string>bla = sequence.pad_sequences(instance, 500)</expression-string>
+        <expression-string>getsizeof(X)</expression-string>
         <language-id>Python</language-id>
         <evaluation-mode>EXPRESSION</evaluation-mode>
       </expression>
       <expression>
-        <expression-string>X[0]</expression-string>
+        <expression-string>getsizeof(epochs)</expression-string>
         <language-id>Python</language-id>
         <evaluation-mode>EXPRESSION</evaluation-mode>
       </expression>
     </expressions>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$USER_HOME$/.conda/envs/thesis/lib/python3.6/site-packages/pandas/core/internals/construction.py" />
-    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydev_imps/_pydev_execfile.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="264">
-          <caret line="17" selection-start-line="17" selection-end-line="17" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/.conda/envs/thesis/lib/python3.6/multiprocessing/process.py" />
     <entry file="file://$USER_HOME$/.conda/envs/thesis/lib/python3.6/functools.py" />
     <entry file="file://$USER_HOME$/.conda/envs/thesis/lib/python3.6/concurrent/futures/_base.py" />
     <entry file="file://$USER_HOME$/.conda/envs/thesis/lib/python3.6/site-packages/sklearn/tree/tree.py" />
@@ -632,13 +611,6 @@
     <entry file="file://$USER_HOME$/miniconda3/envs/thesis/lib/python3.6/site-packages/joblib/externals/loky/process_executor.py" />
     <entry file="file://$USER_HOME$/miniconda3/envs/thesis/lib/python3.6/site-packages/joblib/_parallel_backends.py" />
     <entry file="file://$USER_HOME$/miniconda3/envs/thesis/lib/python3.6/site-packages/joblib/parallel.py" />
-    <entry file="file:///usr/lib/python3/dist-packages/apport_python_hook.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="218">
-          <caret line="52" selection-start-line="52" selection-end-line="52" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/tools/multimodal_fusion_2.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="713">
@@ -737,24 +709,7 @@
     <entry file="file://$USER_HOME$/miniconda3/envs/thesis/lib/python3.6/site-packages/keras/layers/cudnn_recurrent.py" />
     <entry file="file://$USER_HOME$/miniconda3/envs/thesis/lib/python3.6/codecs.py" />
     <entry file="file://$USER_HOME$/miniconda3/envs/thesis/lib/python3.6/posixpath.py" />
-    <entry file="file://$PROJECT_DIR$/keras_tools/attention_layers.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1156">
-          <caret line="104" column="27" selection-start-line="104" selection-start-column="27" selection-end-line="104" selection-end-column="27" />
-          <folding>
-            <element signature="e#783#2319#0" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///usr/local/lib/python3.5/dist-packages/sklearn/utils/validation.py" />
-    <entry file="file://$PROJECT_DIR$/keras_tools/lmnn.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="28">
-          <caret line="1" column="25" selection-start-line="1" selection-start-column="25" selection-end-line="1" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/tools/machine_learning.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="84">
@@ -762,13 +717,6 @@
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tools/subject_analysis.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="697">
-          <caret line="43" selection-start-line="43" selection-end-line="43" />
         </state>
       </provider>
     </entry>
@@ -799,19 +747,16 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tools/multimodal_fusion.py">
+    <entry file="file://$PROJECT_DIR$/tools/subject_analysis.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="532">
-          <caret line="39" column="24" selection-start-line="39" selection-start-column="24" selection-end-line="39" selection-end-column="24" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="171">
+          <caret line="29" column="4" selection-start-line="29" selection-start-column="4" selection-end-line="29" selection-end-column="4" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/main_spanish.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="8008">
+        <state relative-caret-position="4862">
           <caret line="311" column="13" selection-start-line="311" selection-start-column="13" selection-end-line="311" selection-end-column="13" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
@@ -819,54 +764,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/keras_tools/sequences.py">
+    <entry file="file:///usr/local/lib/python3.5/dist-packages/sklearn/cluster/k_means_.py" />
+    <entry file="file:///usr/lib/python3/dist-packages/apport_python_hook.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="159">
-          <caret line="13" column="4" selection-start-line="13" selection-start-column="4" selection-end-line="15" selection-end-column="45" />
-          <folding>
-            <element signature="e#0#40#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/keras_tools/validation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-705">
-          <caret line="13" selection-start-line="13" selection-end-line="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/keras_tools/lstm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="563">
-          <caret line="461" column="42" selection-start-line="461" selection-start-column="42" selection-end-line="461" selection-end-column="42" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/keras_tools/blstm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="364">
-          <caret line="476" column="40" selection-start-line="476" selection-start-column="40" selection-end-line="476" selection-end-column="40" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tools/plots.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="253">
-          <caret line="251" column="25" selection-start-line="251" selection-start-column="25" selection-end-line="251" selection-end-column="25" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/main_lstm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="245">
-          <caret line="45" selection-start-line="45" selection-end-line="45" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="162">
+          <caret line="48" selection-start-line="48" selection-end-line="48" />
         </state>
       </provider>
     </entry>
@@ -874,6 +776,136 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="196">
           <caret line="7" column="41" selection-start-line="7" selection-start-column="41" selection-end-line="7" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tools/plots.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="327">
+          <caret line="312" selection-start-line="312" selection-end-line="312" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/local/lib/python3.5/dist-packages/sklearn/metrics/scorer.py" />
+    <entry file="file:///usr/local/lib/python3.5/dist-packages/sklearn/model_selection/_validation.py" />
+    <entry file="file:///usr/local/lib/python3.5/dist-packages/keras/layers/recurrent.py" />
+    <entry file="file:///usr/local/lib/python3.5/dist-packages/keras/backend/tensorflow_backend.py" />
+    <entry file="file://$PROJECT_DIR$/keras_tools/blstm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="7634">
+          <caret line="347" column="51" selection-start-line="347" selection-start-column="47" selection-end-line="347" selection-end-column="51" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tools/multimodal_fusion.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="308">
+          <caret line="14" selection-start-line="14" selection-end-line="14" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/miniconda3/envs/thesis/lib/python3.6/site-packages/keras/engine/base_layer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="17622">
+          <caret line="817" selection-start-line="817" selection-end-line="817" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/miniconda3/envs/thesis/lib/python3.6/site-packages/keras/engine/training.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="110">
+          <caret line="32" column="17" selection-start-line="32" selection-start-column="17" selection-end-line="32" selection-end-column="17" />
+          <folding>
+            <element signature="e#1435#23204#0" />
+            <element signature="e#23266#24039#0" />
+            <element signature="e#24085#25294#0" />
+            <element signature="e#25339#26107#0" />
+            <element signature="e#26155#26944#0" />
+            <element signature="e#26998#27091#0" />
+            <element signature="e#27165#31031#0" />
+            <element signature="e#31327#40056#0" />
+            <element signature="e#40503#50688#0" />
+            <element signature="e#50866#54346#0" />
+            <element signature="e#54470#56755#0" />
+            <element signature="e#56886#59103#0" />
+            <element signature="e#59168#60950#0" />
+            <element signature="e#60995#61473#0" />
+            <element signature="e#62047#68832#0" />
+            <element signature="e#69151#71240#0" />
+            <element signature="e#71553#73384#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/miniconda3/envs/thesis/lib/python3.6/site-packages/keras/legacy/interfaces.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="396">
+          <caret line="25" column="14" selection-start-line="25" selection-start-column="14" selection-end-line="25" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/miniconda3/envs/thesis/lib/python3.6/site-packages/keras/engine/network.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="27544">
+          <caret line="1324" selection-start-line="1324" selection-end-line="1324" />
+          <folding>
+            <element signature="e#923#2042#1" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/keras_tools/attention_layers.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1254">
+          <caret line="106" column="26" selection-start-line="106" selection-start-column="26" selection-end-line="106" selection-end-column="26" />
+          <folding>
+            <element signature="e#146#516#0" />
+            <element signature="e#783#2319#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/keras_tools/sequences.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1012">
+          <caret line="56" column="87" selection-start-line="56" selection-start-column="87" selection-end-line="56" selection-end-column="87" />
+          <folding>
+            <element signature="e#0#40#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main_lstm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="140">
+          <caret line="41" column="27" selection-start-line="41" selection-start-column="27" selection-end-line="41" selection-end-column="27" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/keras_tools/lstm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="390">
+          <caret line="919" column="18" lean-forward="true" selection-start-line="919" selection-start-column="18" selection-end-line="919" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/keras_tools/validation.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="62" column="50" lean-forward="true" selection-start-line="62" selection-start-column="50" selection-end-line="62" selection-end-column="50" />
+          <folding>
+            <element signature="e#0#30#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/keras_tools/lmnn.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="318">
+          <caret line="56" column="36" selection-start-line="56" selection-start-column="36" selection-end-line="56" selection-end-column="36" />
+          <folding>
+            <element signature="e#0#12#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

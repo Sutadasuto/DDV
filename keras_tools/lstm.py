@@ -18,8 +18,10 @@ from sklearn.model_selection import cross_val_score, StratifiedKFold, LeaveOneOu
 
 import copy
 import keras
-import keras_tools.validation as metrics
+import keras.backend as K
+import keras_tools.lmnn as lmnn
 import keras_tools.sequences as sequences
+import keras_tools.validation as metrics
 import numpy as np
 import os
 import pandas
@@ -379,6 +381,88 @@ def architecture_1(input_shapes, hu=20, output=1, dropout=None, gpu=True):
     return model, name
 
 
+def architecture_1_2(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+
+    name = "Hierarchical Parallel Multistream Hadamard LSTMs with context"
+    mod_seq = []
+    mod_representation = []
+    for input_shape in input_shapes:
+        seq_shape = []
+        for shape in input_shape:
+            seq_shape.append(shape)
+        n = len(input_shape)
+
+        # Create a LSTM for each view
+        seq = []
+        lstms = []
+        for i in range(n):
+            input_data = Input(seq_shape[i])
+            if gpu:
+                lstm = CuDNNLSTM(hu, input_shape=input_shape[i], return_sequences=True)(input_data)
+            else:
+                lstm = LSTM(hu, input_shape=input_shape[i], return_sequences=True)(input_data)
+            if dropout is float:
+                lstm = Dropout(dropout)(lstm)
+            # Add attention in each stream
+            result, attention = AttentionWithContext(return_attention=True)(lstm)
+            seq.append(input_data)
+            lstms.append(result)
+        # Concatenate independent streams
+        merge = keras.layers.multiply(lstms)
+        mod_seq.append(seq)
+        mod_representation.append(merge)
+    video_representation = keras.layers.multiply(mod_representation)
+    dense = Dense(output, activation="sigmoid")(video_representation)
+    model = Model([item for sublist in mod_seq for item in sublist], dense)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model, name
+
+
+def architecture_1_3(input_shapes, hu=20, output=1, dropout=None, gpu=True):
+
+    name = "Hierarchical Parallel Multistream Attention LSTMs with context"
+    mod_seq = []
+    mod_representation = []
+    for input_shape in input_shapes:
+        seq_shape = []
+        for shape in input_shape:
+            seq_shape.append(shape)
+        n = len(input_shape)
+
+        # Create a LSTM for each view
+        seq = []
+        lstms = []
+        for i in range(n):
+            input_data = Input(seq_shape[i])
+            if gpu:
+                lstm = CuDNNLSTM(hu, input_shape=input_shape[i], return_sequences=True)(input_data)
+            else:
+                lstm = LSTM(hu, input_shape=input_shape[i], return_sequences=True)(input_data)
+            if dropout is float:
+                lstm = Dropout(dropout)(lstm)
+            # Add attention in each stream
+            result, attention = AttentionWithContext(return_attention=True)(lstm)
+            seq.append(input_data)
+            lstms.append(result)
+        # Concatenate independent streams
+        merge = keras.layers.concatenate(lstms)
+        merge = keras.layers.Reshape((len(lstms), hu))(merge)
+        views_attention, attention2 = AttentionWithContext(return_attention=True)(merge)
+        mod_seq.append(seq)
+        mod_representation.append(views_attention)
+    mod_merge = keras.layers.concatenate(mod_representation)
+    mod_merge = keras.layers.Reshape((len(mod_representation), hu))(mod_merge)
+    video_representation, attention3 = AttentionWithContext(return_attention=True)(mod_merge)
+    dense = Dense(output, activation="sigmoid")(video_representation)
+    model = Model([item for sublist in mod_seq for item in sublist], dense)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model, name
+
+
 def architecture_2(input_shapes, hu=20, output=1, dropout=None, gpu=True):
 
     name = "Multiview LSTMs with context"
@@ -655,7 +739,7 @@ def single_modality(input_data, cv=10):
 
 
 def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_folder=None, hu=50, dropout=None,
-                  epochs=100, batch_size=16, gpu=True):
+                  epochs=100, batch_size=16, gpu=True, plot="", scoring="roc_auc", feat_standardization=False, verbose=2):
     # Input can be either a folder containing csv files or a .npy file
     if inputs is str:
         if inputs.endswith(".npy"):
@@ -701,19 +785,21 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_f
     with open(os.path.join(output_folder, "lstm_results_modalities_%s_%s.txt" % (seq_reduction, reduction)),
               "w+") as output_file:
         for stream_idx in range(len(inputs)):
-            classifiers = [KerasClassifier(build_fn=builder, hu=hu, timesteps=X[stream_idx].shape[1],
-                                               data_dim=X[stream_idx].shape[2], output=1, dropout=dropout, gpu=gpu,
-                                               epochs=epochs, batch_size=batch_size, verbose=2)
-                           for builder in model_builders]
             header = "Database: %s\nData: %s\nHidden units: %s, Epochs: %s, Batch Size: %s, Dropout: %s, Seq. reduction: %s, %s\n" % (
                 os.path.split(inputs[stream_idx])[0], os.path.split(inputs[stream_idx])[1], hu, epochs, batch_size,
                 dropout, seq_reduction, reduction)
             output_file.write(header)
-            for idx, classifier in enumerate(classifiers):
-                results = cross_val_score(classifier, X[stream_idx], Y[stream_idx], scoring="roc_auc", cv=folds,
+            for idx, builder in enumerate(model_builders):
+                classifier = KerasClassifier(build_fn=builder, hu=hu, timesteps=X[stream_idx].shape[1],
+                                               data_dim=X[stream_idx].shape[2], output=1, dropout=dropout, gpu=gpu,
+                                               epochs=epochs, batch_size=batch_size, verbose=2)
+                result = cross_val_score(classifier, X[stream_idx], Y[stream_idx], scoring=scoring, cv=folds,
                                           verbose=1)
+                if K.backend() == 'tensorflow':
+                    K.clear_session()
+                    del classifier
                 print(header.strip())
-                metrics.write_result(results, labels[idx], output_file)
+                metrics.write_result(result, labels[idx], output_file)
             output_file.write("\n")
 
         # Multidata
@@ -730,9 +816,9 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_f
         output_file.write(header)
 
         for idx, classifier in enumerate(model_builders):
-            results, name = metrics.cross_val_score(classifier, X, Y, scoring="roc_auc", cv=folds, epochs=epochs,
-                                              batch_size=batch_size, verbose=2, plot="",
-                                              hu=hu, input_shapes=input_shapes, output=1, dropout=dropout, gpu=gpu)
+            results, name = metrics.cross_val_score(classifier, X, Y, feat_standardization, folds, scoring, plot,
+                                                    batch_size, epochs, verbose,
+                                                    hu=hu, input_shapes=input_shapes, output=1, dropout=dropout, gpu=gpu)
             print(header.strip())
             metrics.write_result(results, labels[idx], output_file)
         output_file.write("\n")
@@ -750,17 +836,15 @@ def modalities(inputs, cv=10, seq_reduction="padding", reduction="avg", output_f
         output_file.write(header)
 
         for idx, classifier in enumerate(model_builders):
-            results, name = metrics.cross_val_score(classifier, X, Y, scoring="roc_auc", cv=folds, epochs=epochs,
-                                                    batch_size=batch_size, verbose=2, plot="",
-                                                    hu=hu, input_shapes=input_shapes, output=1, dropout=dropout,
-                                                    gpu=gpu)
+            results, name = metrics.cross_val_score(classifier, X, Y, feat_standardization, folds, scoring, plot,
+                                                    batch_size, epochs, verbose,
+                                                    hu=hu, input_shapes=input_shapes, output=1, dropout=dropout, gpu=gpu)
             print(header.strip())
             metrics.write_result(results, labels[idx], output_file)
-        output_file.write("\n")
 
 
 def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", output_folder=None, hu=50, dropout=None,
-              epochs=100, batch_size=16, gpu=True, plot=True):
+              epochs=100, batch_size=16, gpu=True, plot=True, scoring="roc_auc", feat_standardization=False, verbose=1):
     if modalities is str:
         if modalities.endswith(".npy"):
             loaded_array = np.load(modalities)
@@ -810,9 +894,7 @@ def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", outpu
     else:
         folds = cv
 
-    architectures = [architecture_1, architecture_2, architecture_3, architecture_4, architecture_5, architecture_6]
-    models = []
-    names = []
+    architectures = [architecture_1_3]
     streams = [", ".join([os.path.split(i)[1] for i in modality]) for modality in modalities]
     if plot == True:
         plot = output_folder
@@ -825,10 +907,14 @@ def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", outpu
             dropout, seq_reduction, reduction)
         print(header.strip())
         output_file.write(header)
+        results = [["", header], ["", scoring]]
         for architecture in architectures:
-            result, name = metrics.cross_val_score(architecture, X, Y, scoring="roc_auc", cv=folds,
-                                                   epochs=epochs, batch_size=batch_size, verbose=2,
-                                              input_shapes=input_shapes, hu=hu, output=1, dropout=dropout, gpu=gpu,
-                                                   plot=plot)
+            result, name = metrics.cross_val_score(lmnn.create_multistream_model, X, Y, feat_standardization, folds,
+                                                   scoring, plot,
+                                                   batch_size, epochs, verbose,
+                                                   input_shapes=input_shapes, hu=hu, output=1, dropout=dropout, gpu=gpu,
+                                                   single_model_generator=architecture_1)
             print(header.strip())
             metrics.write_result(result, name, output_file)
+            results.append([result, name])
+    return results
