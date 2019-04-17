@@ -128,8 +128,11 @@ class Standarizer():
                 raise ValueError
 
             for idx_feature in range(n_features):
-                view[..., idx_feature] *= self.stds[idx_view][idx_feature]
-                view[..., idx_feature] += self.means[idx_view][idx_feature]
+                mean = self.means[idx_view][idx_feature]
+                std = self.stds[idx_view][idx_feature]
+                if std != 0:
+                    view[..., idx_feature] *= std
+                    view[..., idx_feature] += mean
         return data
 
     def transform(self, data):
@@ -144,6 +147,9 @@ class Standarizer():
                 raise ValueError
 
             for idx_feature in range(n_features):
-                view[..., idx_feature] -= self.means[idx_view][idx_feature]
-                view[..., idx_feature] /= self.stds[idx_view][idx_feature]
+                mean = self.means[idx_view][idx_feature]
+                std = self.stds[idx_view][idx_feature]
+                if std != 0:
+                    view[..., idx_feature] -= mean
+                    view[..., idx_feature] /= std
         return data
