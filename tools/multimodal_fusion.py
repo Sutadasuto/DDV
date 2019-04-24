@@ -596,7 +596,7 @@ class BSSD:
             sample_weights = list(model_weights[k])
             train_view_data[-1] = sample_weights
             # errors = Parallel(n_jobs=1, prefer="threads") \
-            errors = Parallel(n_jobs=min(multiprocessing.cpu_count()-num_folds, len(train_data)), prefer="threads")\
+            errors = Parallel(n_jobs=min(max(multiprocessing.cpu_count()-num_folds, 1), len(train_data)), prefer="threads")\
                 (delayed(self.train_views)(view, train_view_data) for view in range(len(train_data)))
             min_error = 1.0
             for index, error in enumerate(errors):
@@ -883,7 +883,7 @@ class S3DB(BSSD):
                 sample_weights = list(model_weights[idx_modality][k])
                 train_view_data[-1] = sample_weights
                 # errors = Parallel(n_jobs=1, prefer="threads") \
-                errors = Parallel(n_jobs=min(multiprocessing.cpu_count() - num_folds, len(train_data)),
+                errors = Parallel(n_jobs=min(max(multiprocessing.cpu_count()-num_folds, 1), len(train_data)),
                                   prefer="threads") \
                     (delayed(self.train_views)(view, train_view_data) for view in range(len(train_data[idx_modality])))
                 min_error = 1.0
@@ -1093,7 +1093,7 @@ class BSSD2_2(BSSD):
             sample_weights = list(model_weights[k])
             train_view_data[-1] = sample_weights
             # errors = Parallel(n_jobs=1, prefer="threads") \
-            errors = Parallel(n_jobs=min(multiprocessing.cpu_count() - num_folds, len(train_data)), prefer="threads") \
+            errors = Parallel(n_jobs=min(max(multiprocessing.cpu_count()-num_folds, 1), len(train_data)), prefer="threads") \
                 (delayed(self.train_views)(view, train_view_data, custom_dict) for view in range(len(train_data)))
             min_error = 1.0
             for index, error in enumerate(errors):

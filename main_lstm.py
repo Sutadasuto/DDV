@@ -33,15 +33,15 @@ visual_views = utilities.get_modality_views(os.path.join(database_folder + "_",
 acoustical_views = utilities.get_modality_views(os.path.join(database_folder + "_",
                                                              "covarep_frames"
                                                              ))
-hu = 50
+hu = 200
 dropout = None
 epochs = 1
-batch_size = 128
-gpu = True
+batch_size = 16
+gpu = False
 seq_reduction_method = "padding"
-reduction_parameter = "min"
-feat_standardization = False
-folds = 2
+reduction_parameter = "avg"
+feat_standardization = True
+folds = 10
 
 custom_folds, custom_dicts = sa.get_cross_iterable(
     sa.get_dict(os.path.join(database_folder, "subjects.txt")),
@@ -52,5 +52,12 @@ custom_folds, custom_dicts = sa.get_cross_iterable(
 #                 hu, dropout, epochs, batch_size, gpu)
 # lstm.modalities(acoustical_views+visual_views, custom_folds, seq_reduction_method, reduction_parameter, database_folder + "_",
 #                 hu, dropout, epochs, batch_size, gpu)
-lstm.my_method([acoustical_views, visual_views], custom_folds, seq_reduction_method, reduction_parameter, database_folder + "_",
-                hu, dropout, epochs, batch_size, gpu)
+# lstm.my_method([acoustical_views, visual_views], custom_folds, seq_reduction_method, reduction_parameter, database_folder + "_",
+#                 hu, dropout, epochs, batch_size, gpu, feat_standardization=feat_standardization)
+
+# import video.video_analysis as video
+# video.get_statistics_independently("/media/sutadasuto/OS/Users/Sutadasuto/Google Drive/INAOE/Thesis/Real-life_Deception_Detection_2016/Clips_/datasets/visual/au_intensity.arff")
+
+import keras_tools.vgg_face_tools as vgg
+
+vgg.vgg_fine_tuning("/media/winbuntu/google-drive/INAOE/Thesis/Real-life_Deception_Detection_2016/Clips_/faces", batch_size=16, verbose=1)

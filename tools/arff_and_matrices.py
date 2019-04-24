@@ -165,7 +165,7 @@ def generateARFF(targetFileFolder, fileName, relationName, matrix, classes):
         os.makedirs(targetFileFolder)
 
     header = matrix[0]
-    with open(targetFileFolder + "/" + fileName + ".arff", 'w+') as result:
+    with open(os.path.join(targetFileFolder, fileName + ".arff"), 'w+') as result:
         result.write('@relation ' + relationName + '\n\n')
         for name in header[:-1]:
             result.write('@attribute ' + name + ' numeric\n')
@@ -178,7 +178,7 @@ def generateARFF(targetFileFolder, fileName, relationName, matrix, classes):
         result.write('\n\n@data\n')
         for row in matrix[1:]:
             if len(row) > 1:
-                result.write(','.join(['{:.4f}'.format(x) for x in row[:-1]]) + ',' + row[-1] + '\n')
+                result.write(','.join(['{:.4f}'.format(float(x)) for x in row[:-1]]) + ',' + row[-1] + '\n')
 
 
 def get_metrics_from_matrix(matrix):

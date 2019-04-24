@@ -37,12 +37,13 @@ classifierList = [
     # DecisionTreeClassifier(random_state=10),
     # RandomForestClassifier(n_estimators=50, random_state=10),
     # AdaBoostClassifier(DecisionTreeClassifier(random_state=10), random_state=10),
-    GaussianNB(),
+    # GaussianNB(),
     # LogisticRegression()
+    # SVC(gamma=1e-6, random_state=10, tol=1e-7)
 ]
 print("List of classifiers ready.")
 
-dataset_name = "court_full"
+dataset_name = "court_full_16"
 fps = 29.97
 print("Working the %s database" % dataset_name)
 database_folder, plot_title, transcripts_folder, audios_folder, \
@@ -53,22 +54,22 @@ print("Dataset parameters loaded.")
 extract_audio = False
 extract_transcripts = False
 
-covarep = True
-openFace = True
-time_stamped_pos = True
+covarep = False
+openFace = False
+time_stamped_pos = False
 
-audio_analysis = True
-text_analyzer = True
-video_analysis = True
+audio_analysis = False
+text_analyzer = False
+video_analysis = False
 ngrams = [1, 2, 3, 4]
 # ngrams = [1, 2, 3]
 
-mixup = True
-early_fusions = True
+mixup = False
+early_fusions = False
 
-analysis = False
-features_analysis = False
-fusion_analysis = False
+analysis = True
+features_analysis = True
+fusion_analysis = True
 complementariy_analysis = False
 
 boosting_comparison = False
