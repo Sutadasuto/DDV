@@ -47,13 +47,21 @@ def cross_val_score(model_generator, X, Y, feat_standardization=False, cv=10,
         else:
             model = model_data[0]
         model.set_weights(initial_weights)
-        X_train = []
-        for x in X:
-            X_train.append(x[fold[0]])
+
+        if type(X) is list:
+            X_train = []
+            for x in X:
+                X_train.append(x[fold[0]])
+        else:
+            X_train= X[fold[0]]
         Y_train = Y_o[fold[0]]
-        X_test = []
-        for x in X:
-            X_test.append(x[fold[1]])
+
+        if type(X) is list:
+            X_test = []
+            for x in X:
+                X_test.append(x[fold[1]])
+        else:
+            X_test = X[fold[1]]
         Y_test = Y_o[fold[1]]
 
         if feat_standardization:

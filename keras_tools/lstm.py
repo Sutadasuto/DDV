@@ -17,6 +17,7 @@ from keras_tools.attention_layers import Attention, AttentionWithContext
 from sklearn.model_selection import cross_val_score, StratifiedKFold, LeaveOneOut
 
 import copy
+import csv
 import keras
 import keras.backend as K
 import keras_tools.lmnn as lmnn
@@ -916,5 +917,205 @@ def my_method(modalities, cv=10, seq_reduction="padding", reduction="avg", outpu
                                                    single_model_generator=architecture_1)
             print(header.strip())
             metrics.write_result(result, name, output_file)
-            results.append([result, name])
+            results.append([name, result])
     return results
+
+
+def views_encoding(modalities, cv=10, seq_reduction="padding", reduction="avg", output_folder=None,
+              epochs=100, batch_size=16, gpu=True, plot="", scoring="roc_auc", feat_standardization=False, verbose=2):
+
+    if modalities is str:
+        if modalities.endswith(".npy"):
+            loaded_array = np.load(modalities)
+            X = loaded_array[0]
+            Y = loaded_array[1]
+    else:
+        if seq_reduction == "padding":
+            length = reduction
+        else:
+            length = None
+        X = []
+        Y = []
+        view_names = []
+        for stream_idx, stream in enumerate(modalities):
+            X_m = []
+            Y_m = []
+            for view in stream:
+                view_names.append(os.path.split(view)[-1].replace(".arff",""))
+                X_idx, Y_idx = sequences.get_input_sequences(view, length)
+                X_m.append(X_idx)
+                Y_m.append(Y_idx)
+            X.append(X_m)
+            Y.append(Y_m)
+        if seq_reduction == "padding":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding(modality)
+        elif seq_reduction == "kmeans":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.kmeans_seq_reduction(modality, k=reduction)
+        elif seq_reduction == "pad_means":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding_means(modality, reduction)
+        elif seq_reduction == "sync_kmeans":
+            for mod_idx, modality in enumerate(X):
+                modality = sequences.synchronize_views(modality)
+                X[mod_idx] = sequences.kmeans_sync_seq_reduction(modality, k=reduction)
+
+    if output_folder is None:
+        output_folder = os.path.split(os.path.split(modalities[0][0])[0])[0]
+
+    input_shapes = [x.shape[1:] for X_m in X for x in X_m]
+    X = [item for sublist in X for item in sublist]
+    Y = [item for sublist in Y for item in sublist]
+    if type(cv) is int:
+        folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
+        folds = [fold for fold in folds.split(X[0], Y[0])]
+    elif cv == "loo":
+        folds = [fold for fold in LeaveOneOut().split(X[0])]
+    else:
+        folds = cv
+
+    def create_encoding_lstm(hu, timesteps, data_dim, output, gpu=True):
+        # expected input_data data shape: (batch_size, timesteps, data_dim)
+        # create model
+        model = Sequential()
+        if gpu:
+            model.add(CuDNNLSTM(hu, return_sequences=False, input_shape=(timesteps, data_dim)))
+        else:
+            model.add(LSTM(hu, return_sequences=False, input_shape=(timesteps, data_dim)))
+        # model.add(Attention())
+        model.add(Dense(output, activation="sigmoid"))
+        model.compile(loss='binary_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
+        return model
+
+    with open(os.path.join(output_folder, "%s_%s_%s.csv" % ("view_encodings", seq_reduction, reduction)), "w+") as output_file:
+        header = "Epochs: %s, Batch Size: %s, Seq. reduction: %s, %s\n" % (
+            epochs, batch_size, seq_reduction, reduction)
+        print(header.strip())
+        output_file.write(header)
+        result_matrix = [["", header], ["", scoring]]
+        for view_idx, view in enumerate(X):
+            target_labels = Y[view_idx]
+            if len(target_labels.shape) == 1:
+                output=1
+            else:
+                output = target_labels.shape[-1]
+            results, name = metrics.cross_val_score(create_encoding_lstm, view, target_labels, feat_standardization, folds,
+                                                   scoring, plot,
+                                                   batch_size, epochs, verbose,
+                                                   hu=50, timesteps=input_shapes[view_idx][-2],
+                                                   data_dim=input_shapes[view_idx][-1], output=output, gpu=gpu)
+            print("%s\n%s: %s" % (header, view_names[view_idx], round(results.mean(), 4)))
+            result_matrix.append([view_names[view_idx], round(results.mean(), 4)])
+        csv_writer = csv.writer(output_file)
+        csv_writer.writerows(result_matrix)
+
+
+def views_grid_search(modalities, cv=10, seq_reduction="padding", reduction="avg", output_folder=None,
+              gpu=True, scoring="roc_auc", verbose=2):
+
+    if modalities is str:
+        if modalities.endswith(".npy"):
+            loaded_array = np.load(modalities)
+            X = loaded_array[0]
+            Y = loaded_array[1]
+    else:
+        if seq_reduction == "padding":
+            length = reduction
+        else:
+            length = None
+        X = []
+        Y = []
+        view_names = []
+        for stream_idx, stream in enumerate(modalities):
+            X_m = []
+            Y_m = []
+            for view in stream:
+                view_names.append(os.path.split(view)[-1].replace(".arff",""))
+                X_idx, Y_idx = sequences.get_input_sequences(view, length)
+                X_m.append(X_idx)
+                Y_m.append(Y_idx)
+            X.append(X_m)
+            Y.append(Y_m)
+        if seq_reduction == "padding":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding(modality)
+        elif seq_reduction == "kmeans":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.kmeans_seq_reduction(modality, k=reduction)
+        elif seq_reduction == "pad_means":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding_means(modality, reduction)
+        elif seq_reduction == "sync_kmeans":
+            for mod_idx, modality in enumerate(X):
+                modality = sequences.synchronize_views(modality)
+                X[mod_idx] = sequences.kmeans_sync_seq_reduction(modality, k=reduction)
+
+    if output_folder is None:
+        output_folder = os.path.split(os.path.split(modalities[0][0])[0])[0]
+
+    input_shapes = [x.shape[1:] for X_m in X for x in X_m]
+    X = [item for sublist in X for item in sublist]
+    Y = [item for sublist in Y for item in sublist]
+    if type(cv) is int:
+        folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
+        folds = [fold for fold in folds.split(X[0], Y[0])]
+    elif cv == "loo":
+        folds = [fold for fold in LeaveOneOut().split(X[0])]
+    else:
+        folds = cv
+
+    def create_encoding_lstm(hu, time_steps, data_dim, output, dropout=0, gpu=True):
+        # create model
+        model = Sequential()
+        if gpu:
+            model.add(CuDNNLSTM(hu, return_sequences=False, input_shape=(time_steps, data_dim)))
+        else:
+            model.add(LSTM(hu, return_sequences=False, input_shape=(time_steps, data_dim)))
+        # model.add(Attention())
+        model.add(Dropout(dropout, seed=0))
+        model.add(Dense(output, activation="sigmoid"))
+        model.compile(loss='binary_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
+        return model
+
+    from sklearn.model_selection import GridSearchCV
+    with open(os.path.join(output_folder, "grid_search_results.txt"), "w+") as output_file:
+        for view_idx, view in enumerate(X):
+            target_labels = Y[view_idx]
+            if len(target_labels.shape) == 1:
+                output = 1
+            else:
+                output = target_labels.shape[-1]
+            data_shape = view.shape
+            data_dim = data_shape[-1]
+            time_steps = data_shape[-2]
+            model = KerasClassifier(create_encoding_lstm, gpu=gpu, verbose=verbose,
+                                    output=output, time_steps=time_steps, data_dim=data_dim)
+
+            epochs = [20, 50, 100, 150]
+            batch_size = [1, 8, 16, 32]
+            hu = [data_shape[-1], int(data_shape[-1] / 2.0), 20, 50, 100, 200, 300]
+            param_grid = dict(
+                epochs = epochs,
+                batch_size = batch_size,
+                hu = hu
+            )
+
+            grid = GridSearchCV(estimator=model, param_grid=param_grid, scoring=scoring, cv=folds, verbose=1)
+            grid_result = grid.fit(view, target_labels)
+
+            # summarize results
+            print("View: %s" % view_names[view_idx])
+            print("View: %s" % view_names[view_idx], file=output_file)
+            print("Best: %f %s using %s" % (grid_result.best_score_, scoring, grid_result.best_params_))
+            print("Best: %f %s using %s" % (grid_result.best_score_, scoring, grid_result.best_params_), file=output_file)
+            means = grid_result.cv_results_['mean_test_score']
+            stds = grid_result.cv_results_['std_test_score']
+            params = grid_result.cv_results_['params']
+            for mean, stdev, param in zip(means, stds, params):
+                print("%f (%f) with: %r" % (mean, stdev, param))
+                print("%f (%f) with: %r" % (mean, stdev, param), file=output_file)

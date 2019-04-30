@@ -38,8 +38,8 @@ dropout = None
 epochs = 1
 batch_size = 16
 gpu = False
-seq_reduction_method = "padding"
-reduction_parameter = "avg"
+seq_reduction_method = "sync_kmeans"
+reduction_parameter = 100
 feat_standardization = True
 folds = 10
 
@@ -58,6 +58,8 @@ custom_folds, custom_dicts = sa.get_cross_iterable(
 # import video.video_analysis as video
 # video.get_statistics_independently("/media/sutadasuto/OS/Users/Sutadasuto/Google Drive/INAOE/Thesis/Real-life_Deception_Detection_2016/Clips_/datasets/visual/au_intensity.arff")
 
-import keras_tools.vgg_face_tools as vgg
+# import keras_tools.vgg_face_tools as vgg
+#
+# vgg.vgg_fine_tuning("/media/winbuntu/google-drive/INAOE/Thesis/Real-life_Deception_Detection_2016/Clips_/faces", batch_size=16, verbose=1)
 
-vgg.vgg_fine_tuning("/media/winbuntu/google-drive/INAOE/Thesis/Real-life_Deception_Detection_2016/Clips_/faces", batch_size=16, verbose=1)
+lstm.views_grid_search([acoustical_views, visual_views], custom_folds, seq_reduction_method, reduction_parameter)
