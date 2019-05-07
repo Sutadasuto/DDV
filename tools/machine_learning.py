@@ -1,6 +1,13 @@
+def warn(*args, **kwargs):
+    pass
+import warnings
+warnings.warn = warn
+
+import multiprocessing
 import numpy as np
 import os
 import math
+import types
 
 from copy import deepcopy
 from sklearn import preprocessing
@@ -15,7 +22,7 @@ from sklearn.model_selection import cross_val_score
 import tools.arff_and_matrices as am
 
 
-def check_cv(cv, labels):
+def check_cv(cv, labels, seed=10):
     num_instances = len(labels)
     if type(cv) is int:
         if cv < 2:
@@ -26,7 +33,7 @@ def check_cv(cv, labels):
             raise ValueError
         else:
             indices = [i for i in range(len(labels))]
-            np.random.RandomState(10).shuffle(indices)
+            np.random.RandomState(seed).shuffle(indices)
             step = int(math.floor(len(indices) / cv))
             packs = []
 
@@ -150,6 +157,10 @@ def complementarity_analysis(classifier, databasesFolder=None, modalityFiles=Non
         print("There was an error reading the list of evaluated instances.")
         raise
     instanceNames = [name.strip() for name in instanceNames]
+    if folds == len(instanceNames):
+        from sklearn.model_selection import LeaveOneOut
+        indices = [i for i in range(len(instanceNames))]
+        folds = LeaveOneOut().split(indices)
     instanceNames += ["Accuracy", "AUC"]
 
     resultMatrix = np.array([[str(classifier).split("(")[0], ""] + instanceNames]).transpose()
@@ -159,10 +170,14 @@ def complementarity_analysis(classifier, databasesFolder=None, modalityFiles=Non
         classes.sort()
         print("\n" + str(classifier).split("(")[0])
         print("Relation: " + relation)
-        predictedLabels = model.cross_val_predict(classifier, matrix, labels, cv=folds)
+        predictedLabels = model.cross_val_predict(classifier, matrix, labels, cv=folds, n_jobs=multiprocessing.cpu_count())
+        if isinstance(folds, types.GeneratorType):
+            folds = LeaveOneOut().split(indices)
         if showProba:
             try:
-                probabilities = model.cross_val_predict(classifier, matrix, labels, method='predict_proba', cv=folds)
+                probabilities = model.cross_val_predict(classifier, matrix, labels, method='predict_proba', cv=folds, n_jobs=multiprocessing.cpu_count())
+                if isinstance(folds, types.GeneratorType):
+                    folds = LeaveOneOut().split(indices)
             except:
                 probabilities = np.array([[0, 0] for i in range(len(labels))])
                 binary = preprocessing.label_binarize(predictedLabels, classes=list(reversed(classes)))
@@ -175,15 +190,23 @@ def complementarity_analysis(classifier, databasesFolder=None, modalityFiles=Non
 
         print(confusion_matrix(labels, predictedLabels))
         # accuracy = round(metrics.accuracy_score(labels, predictedLabels)*100, 1)
-        accuracy = cross_val_score(classifier, matrix, labels, cv=folds, scoring="accuracy")
+        accuracy = cross_val_score(classifier, matrix, labels, cv=folds, scoring="accuracy", n_jobs=multiprocessing.cpu_count())
         accuracy = round(accuracy.mean() * 100, 1)
+        if isinstance(folds, types.GeneratorType):
+            folds = LeaveOneOut().split(indices)
         #print metrics.accuracy_score(labels, model.cross_val_predict(classifier, matrix, labels, cv=10))
         #auc = metrics.roc_auc_score(preprocessing.label_binarize(labels, classes=list(reversed(classes))),
         #                            preprocessing.label_binarize(predictedLabels, classes=list(reversed(classes))))
         #auc = round(auc, 3)
-        auc = cross_val_score(classifier, matrix, preprocessing.label_binarize(labels, classes), cv=folds, scoring="roc_auc")
-        auc = round(auc.mean(), 3)
+        try:
+            auc = cross_val_score(classifier, matrix, preprocessing.label_binarize(labels, classes), cv=folds, scoring="roc_auc", n_jobs=multiprocessing.cpu_count())
+            auc = round(auc.mean(), 3)
+        except:
+            print("AUC cannot be calculated")
+            auc = 0
         print("Accuracy: %s\nAUC: %s" % (accuracy, auc))
+        if isinstance(folds, types.GeneratorType):
+            folds = LeaveOneOut().split(indices)
         #print metrics.roc_auc_score(preprocessing.label_binarize(labels, classes=list(reversed(classes))),
         #                            preprocessing.label_binarize(model.cross_val_predict(classifier, matrix, labels, cv=10),
         #                                                         classes=list(reversed(classes))))
@@ -205,9 +228,9 @@ def complementarity_analysis(classifier, databasesFolder=None, modalityFiles=Non
 def concatenate_result_matrices(matrices):
 
     tuple = (matrices[0][:, :-1],)
-    for matrix in matrices[1:-1]:
+    for matrix in matrices[1:]:
         tuple += (matrix[:,1:-1],)
-    tuple += (matrices[-1][:,1:],)
+    tuple += (matrices[-1][:,-1],)
     matrix = np.column_stack(tuple)
     return matrix
 
@@ -218,19 +241,30 @@ def evaluate_single_features(classifier, arffInput, folds=None):
         folds = 10
 
     matrix, Y, relation, attributes = am.arff_to_nparray(arffInput)
+    if folds == len(Y):
+        from sklearn.model_selection import LeaveOneOut
+        folds = LeaveOneOut().split(matrix)
     classes = list(set(Y))
     resultMatrix = np.array([["", "Attributes"] + attributes]).transpose()
     scores = np.array([[str(classifier).split("(")[0], ""],["Accuracy", "AUC"]] + [["0","0"] for i in range(len(attributes))])
     for i in range(len(attributes)):
         X = matrix[:,i].reshape(-1,1)
-        predictedLabels = model.cross_val_predict(classifier, X, Y, cv=folds)
+        predictedLabels = model.cross_val_predict(classifier, X, Y, cv=folds, n_jobs=multiprocessing.cpu_count())
         # accuracy = round(metrics.accuracy_score(Y, predictedLabels), 3) * 100
-        accuracy = cross_val_score(classifier, X, Y, cv=folds, scoring="accuracy")
+        accuracy = cross_val_score(classifier, X, Y, cv=folds, scoring="accuracy", n_jobs=multiprocessing.cpu_count())
+        if isinstance(folds, types.GeneratorType):
+            folds = LeaveOneOut().split(matrix)
         # auc = metrics.roc_auc_score(preprocessing.label_binarize(Y, classes),
         #                             preprocessing.label_binarize(predictedLabels, classes))
         # auc = round(auc, 3)
-        auc = cross_val_score(classifier, X, preprocessing.label_binarize(Y, classes), cv=folds, scoring="roc_auc")
-        auc = round(auc.mean(), 3)
+        try:
+            auc = cross_val_score(classifier, X, preprocessing.label_binarize(Y, classes), cv=folds, scoring="roc_auc", n_jobs=multiprocessing.cpu_count())
+            auc = round(auc.mean(), 3)
+        except:
+            print("AUC cannot be calculated")
+            auc = 0
+        if isinstance(folds, types.GeneratorType):
+            folds = LeaveOneOut().split(matrix)
         scores[i+2] = np.array([str(accuracy), str(auc)])
     resultMatrix = np.column_stack((resultMatrix, scores))
     return  resultMatrix
@@ -328,8 +362,12 @@ def hard_majority_vote_evaluation(classifier, databasesFolder=None, modalityFile
             final_labels[position] = value
         predictedLabels = np.array(predictedLabels)
         accuracy.append(metrics.accuracy_score(labels[pair[1]], predictedLabels))
-        auc.append(metrics.roc_auc_score(preprocessing.label_binarize(labels[pair[1]], classes=list(reversed(classes))),
-                                preprocessing.label_binarize(predictedLabels, classes=list(reversed(classes)))))
+        try:
+            auc.append(metrics.roc_auc_score(preprocessing.label_binarize(labels[pair[1]], classes=list(reversed(classes))),
+                                    preprocessing.label_binarize(predictedLabels, classes=list(reversed(classes)))))
+        except:
+            print("AUC cannot be calculated")
+            auc.append(0)
 
     # accuracy = round(metrics.accuracy_score(labels, predictedLabels)*100, 1)
     # print metrics.accuracy_score(labels, model.cross_val_predict(classifier, matrix, labels, cv=10))
@@ -409,6 +447,101 @@ def my_method(object, databases_folder=None, folds=None, relation_name=None, plo
     return result_matrix
 
 
+def proba_majority_vote_evaluation(classifier, databasesFolder=None, modalityFiles=None, folds=None, relationName=None):
+
+    if databasesFolder == None:
+        databasesFolder = "datasets"
+    if folds == None:
+        folds = 10
+    if relationName == None:
+        relationName = "proba_majority_vote"
+    if modalityFiles == None:
+        modalityFiles = sorted([os.path.join(databasesFolder, f) for f in os.listdir(databasesFolder)
+                        if os.path.isfile(os.path.join(databasesFolder, f))
+                        and not f.startswith('.') and f[-5:].lower() == ".arff"],
+                       key=lambda f: f.lower())
+    else:
+        modalityFiles = [os.path.join(databasesFolder, f) for f in modalityFiles]
+    try:
+        with open (os.path.join(databasesFolder, "list_of_instances.csv")) as listOfInstances:
+            instanceNames = listOfInstances.readlines()
+    except:
+        print("There was an error reading the list of evaluated instances.")
+        raise
+    print("\nMethod: " + relationName)
+    instanceNames = [name.strip() for name in instanceNames]
+    instanceNames += ["Accuracy", "AUC"]
+
+    resultMatrix = np.array([[str(classifier).split("(")[0], ""] + instanceNames]).transpose()
+    matrix, labels, relation, attributes = am.arff_to_nparray(modalityFiles[0])
+    folds = check_cv(folds, labels)
+    final_labels = ["None" for i in range(len(labels))]
+    accuracy = []
+    auc = []
+    for pair in folds:
+        predictionLists = []
+        for arffFile in modalityFiles:
+            matrix, labels, relation, attributes = am.arff_to_nparray(arffFile)
+            classes = list(set(labels))
+            classes.sort()
+            classifier.fit(matrix[pair[0]], labels[pair[0]])
+            try:
+                predictionLists.append(classifier.predict_proba(matrix[pair[1]]))
+            except:
+                probabilities = np.array([[0, 0] for i in range(len(labels[pair[1]]))])
+                binary = preprocessing.label_binarize(classifier.predict(matrix[pair[1]]),
+                                                      classes=list(reversed(classes)))
+                for i in range(len(binary)):
+                    if binary[i, 0] == 0:
+                        couple = [0, 1]
+                    else:
+                        couple = [1, 0]
+                    probabilities[i] = np.array(couple)
+                predictionLists.append(probabilities)
+
+        predictedLabels = []
+        for instance in range(len(predictionLists[0])):
+            votes = np.array([modality[instance] for modality in predictionLists])
+            total_votes = np.sum(votes, axis=0)
+            winner = classes[np.argmax(total_votes)]
+            predictedLabels.append(winner)
+        for idx, value in enumerate(predictedLabels):
+            position = pair[1][idx]
+            final_labels[position] = value
+        predictedLabels = np.array(predictedLabels)
+        accuracy.append(metrics.accuracy_score(labels[pair[1]], predictedLabels))
+        try:
+            auc.append(metrics.roc_auc_score(preprocessing.label_binarize(labels[pair[1]], classes=list(reversed(classes))),
+                                    preprocessing.label_binarize(predictedLabels, classes=list(reversed(classes)))))
+        except:
+            print("AUC cannot be calculated")
+            auc.append(0)
+
+    # accuracy = round(metrics.accuracy_score(labels, predictedLabels)*100, 1)
+    # print metrics.accuracy_score(labels, model.cross_val_predict(classifier, matrix, labels, cv=10))
+    # auc = metrics.roc_auc_score(preprocessing.label_binarize(labels, classes=list(reversed(classes))),
+    #                             preprocessing.label_binarize(predictedLabels, classes=list(reversed(classes))))
+    # auc = round(auc, 3)
+    accuracy = np.array(accuracy)
+    auc= np.array(auc)
+    accuracy = round(accuracy.mean() * 100, 1)
+    auc = round(auc.mean(), 3)
+    print("Accuracy: %s\nAUC: %s" % (accuracy, auc))
+    #print metrics.roc_auc_score(preprocessing.label_binarize(labels, classes=list(reversed(classes))),
+    #                            preprocessing.label_binarize(model.cross_val_predict(classifier, matrix, labels, cv=10),
+    #                                                         classes=list(reversed(classes))))
+    final_labels = np.array(final_labels)
+    newColumn = np.array([np.concatenate((np.array([relationName, "Guess"]), final_labels == labels,
+                                          np.array([accuracy]), np.array([auc])))])
+    resultMatrix = np.column_stack((resultMatrix, newColumn.transpose()))
+    newColumn = np.array([np.concatenate((np.array(["","Real Label"]), labels,
+                                          np.array(["", ""])))])
+    resultMatrix = np.column_stack((resultMatrix, newColumn.transpose()))
+    resultMatrix[resultMatrix == "True"] = "1"
+    resultMatrix[resultMatrix == "False"] = "0"
+    return resultMatrix
+
+
 def stacking_evaluation(classifier, databasesFolder=None, modalityFiles=None, folds=None, relationName=None):
 
     if databasesFolder == None:
@@ -467,9 +600,13 @@ def stacking_evaluation(classifier, databasesFolder=None, modalityFiles=None, fo
             position = pair[1][idx]
             final_labels[position] = value
         accuracy.append(metrics.accuracy_score(labels[pair[1]], predictedLabels))
-        auc.append(metrics.roc_auc_score(preprocessing.label_binarize(labels[pair[1]], classes=list(reversed(classes))),
-                                         preprocessing.label_binarize(predictedLabels,
-                                                                      classes=list(reversed(classes)))))
+        try:
+            auc.append(metrics.roc_auc_score(preprocessing.label_binarize(labels[pair[1]], classes=list(reversed(classes))),
+                                             preprocessing.label_binarize(predictedLabels,
+                                                                          classes=list(reversed(classes)))))
+        except:
+            print("AUC cannot be calculated")
+            auc.append(0)
     # accuracy = round(metrics.accuracy_score(labels, predictedLabels)*100, 1)
     #print metrics.accuracy_score(labels, model.cross_val_predict(classifier, matrix, labels, cv=10))
     # auc = metrics.roc_auc_score(preprocessing.label_binarize(labels, classes=list(reversed(classes))),
@@ -590,10 +727,13 @@ def stacking_proba_evaluation(classifier, databasesFolder=None, modalityFiles=No
             position = pair[1][idx]
             final_labels[position] = value
         accuracy.append(metrics.accuracy_score(labels[pair[1]], predictedLabels))
-        auc.append(metrics.roc_auc_score(preprocessing.label_binarize(labels[pair[1]], classes=list(reversed(classes))),
-                                         preprocessing.label_binarize(predictedLabels,
-                                                                      classes=list(reversed(classes)))))
-
+        try:
+            auc.append(metrics.roc_auc_score(preprocessing.label_binarize(labels[pair[1]], classes=list(reversed(classes))),
+                                             preprocessing.label_binarize(predictedLabels,
+                                                                          classes=list(reversed(classes)))))
+        except:
+            print("AUC cannot be calculated")
+            auc.append(0)
     # predictedLabels = model.cross_val_predict(classifier, newMatrix, labels, cv=folds)
     # accuracy = round(metrics.accuracy_score(labels, predictedLabels)*100, 1)
     #print metrics.accuracy_score(labels, model.cross_val_predict(classifier, matrix, labels, cv=10))

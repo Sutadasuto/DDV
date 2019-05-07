@@ -180,6 +180,8 @@ def plot_single_results(folder, title):
     plt.tight_layout()
     plt.savefig(os.path.join(folder, "plots", "%s_%s.png" % ("fusion", metric)))
     plt.close()
+    if sub_data.shape[0] == 0:
+        os.remove(os.path.join(folder, "plots", "%s_%s.png" % ("fusion", metric)))
 
     for indices in views_indices:
         sub_data = data[indices, :]
@@ -221,7 +223,8 @@ def plot_single_results(folder, title):
     else:
         plt.ylim((0.20, 0.80))
     plt.tight_layout()
-    plt.savefig(os.path.join(folder, "plots", "%s_%s.png" % ("All views", metric)))
+    if len(views_indices) > 0:
+        plt.savefig(os.path.join(folder, "plots", "%s_%s.png" % ("All views", metric)))
     plt.close()
 
     df = pandas.read_csv(os.path.join(folder, "complementarity.csv"))
@@ -285,7 +288,7 @@ def s3db_distributions(data, views, best_views, title, destination):
     for idx, iteration in enumerate(data):
         best_view = best_views[idx]
         best_view = views[best_view]
-        plt.stem(iteration, color='b')
+        plt.stem(iteration)
         plt.ylim(0, 0.5)
         plt.xlim(0, len(iteration)-1)
         plt.grid(True)

@@ -26,6 +26,7 @@ import keras_tools.validation as metrics
 import numpy as np
 import os
 import pandas
+import tools.arff_and_matrices as am
 
 
 def create_basic_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
@@ -1013,6 +1014,25 @@ def views_encoding(modalities, cv=10, seq_reduction="padding", reduction="avg", 
         csv_writer.writerows(result_matrix)
 
 
+def create_encoding_lstm(hu, time_steps, data_dim, output, dropout=0, gpu=True):
+
+    if K.backend() == 'tensorflow':
+        K.clear_session()
+    # create model
+    model = Sequential()
+    if gpu:
+        model.add(CuDNNLSTM(hu, return_sequences=False, input_shape=(time_steps, data_dim), name="last_layer"))
+    else:
+        model.add(LSTM(hu, return_sequences=False, input_shape=(time_steps, data_dim), name="last_layer"))
+    # model.add(Attention())
+    model.add(Dropout(dropout, seed=0))
+    model.add(Dense(output, activation="sigmoid"))
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model
+
+
 def views_grid_search(modalities, cv=10, seq_reduction="padding", reduction="avg", output_folder=None,
               gpu=True, scoring="roc_auc", verbose=2):
 
@@ -1056,7 +1076,9 @@ def views_grid_search(modalities, cv=10, seq_reduction="padding", reduction="avg
     if output_folder is None:
         output_folder = os.path.split(os.path.split(modalities[0][0])[0])[0]
 
-    input_shapes = [x.shape[1:] for X_m in X for x in X_m]
+    if not os.path.exists(output_folder):
+        os.mkdir(output_folder)
+
     X = [item for sublist in X for item in sublist]
     Y = [item for sublist in Y for item in sublist]
     if type(cv) is int:
@@ -1066,21 +1088,6 @@ def views_grid_search(modalities, cv=10, seq_reduction="padding", reduction="avg
         folds = [fold for fold in LeaveOneOut().split(X[0])]
     else:
         folds = cv
-
-    def create_encoding_lstm(hu, time_steps, data_dim, output, dropout=0, gpu=True):
-        # create model
-        model = Sequential()
-        if gpu:
-            model.add(CuDNNLSTM(hu, return_sequences=False, input_shape=(time_steps, data_dim)))
-        else:
-            model.add(LSTM(hu, return_sequences=False, input_shape=(time_steps, data_dim)))
-        # model.add(Attention())
-        model.add(Dropout(dropout, seed=0))
-        model.add(Dense(output, activation="sigmoid"))
-        model.compile(loss='binary_crossentropy',
-                      optimizer='adam',
-                      metrics=['accuracy'])
-        return model
 
     from sklearn.model_selection import GridSearchCV
     with open(os.path.join(output_folder, "grid_search_results.txt"), "w+") as output_file:
@@ -1105,8 +1112,11 @@ def views_grid_search(modalities, cv=10, seq_reduction="padding", reduction="avg
                 hu = hu
             )
 
-            grid = GridSearchCV(estimator=model, param_grid=param_grid, scoring=scoring, cv=folds, verbose=1)
+            grid = GridSearchCV(estimator=model, param_grid=param_grid, scoring=scoring, cv=folds, verbose=100)
             grid_result = grid.fit(view, target_labels)
+            if K.backend() == 'tensorflow':
+                K.clear_session()
+                del model
 
             # summarize results
             print("View: %s" % view_names[view_idx])
@@ -1119,3 +1129,112 @@ def views_grid_search(modalities, cv=10, seq_reduction="padding", reduction="avg
             for mean, stdev, param in zip(means, stds, params):
                 print("%f (%f) with: %r" % (mean, stdev, param))
                 print("%f (%f) with: %r" % (mean, stdev, param), file=output_file)
+
+
+def views_train_features(hyperparameters_file, modalities, seq_reduction="padding", reduction="avg", output_folder=None,
+                         verbose=2):
+
+    if modalities is str:
+        if modalities.endswith(".npy"):
+            loaded_array = np.load(modalities)
+            X = loaded_array[0]
+            Y = loaded_array[1]
+    else:
+        if seq_reduction == "padding":
+            length = reduction
+        else:
+            length = None
+        X = []
+        Y = []
+        view_names = []
+        for stream_idx, stream in enumerate(modalities):
+            X_m = []
+            Y_m = []
+            for view in stream:
+                view_names.append(os.path.split(view)[-1].replace(".arff",""))
+                X_idx, Y_idx, encoder = sequences.get_input_sequences(view, length, True)
+                X_m.append(X_idx)
+                Y_m.append(Y_idx)
+            X.append(X_m)
+            Y.append(Y_m)
+        if seq_reduction == "padding":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding(modality)
+        elif seq_reduction == "kmeans":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.kmeans_seq_reduction(modality, k=reduction)
+        elif seq_reduction == "pad_means":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding_means(modality, reduction)
+        elif seq_reduction == "sync_kmeans":
+            for mod_idx, modality in enumerate(X):
+                modality = sequences.synchronize_views(modality)
+                X[mod_idx] = sequences.kmeans_sync_seq_reduction(modality, k=reduction)
+
+    if output_folder is None:
+        output_folder = os.path.join(os.getcwd(), "tuned_models")
+
+    if not os.path.exists(output_folder):
+        os.mkdir(output_folder)
+
+    X = [item for sublist in X for item in sublist]
+    Y = [item for sublist in Y for item in sublist]
+
+    with open(hyperparameters_file) as grid:
+
+        import ast
+        view_found = False
+        lines = grid.readlines()
+        parameters = dict()
+        for line in lines:
+            if line.startswith("View: "):
+                view_name = line.strip().replace("View: ", "")
+                parameters[view_name] = None
+                view_found = True
+            elif view_found == True:
+                parameters_dict = line.split(" using ")[1]
+                parameters[view_name] = ast.literal_eval(parameters_dict)
+                view_found = False
+
+    for view_idx, view in enumerate(X):
+        target_labels = Y[view_idx]
+        if len(target_labels.shape) == 1:
+            output = 1
+        else:
+            output = target_labels.shape[-1]
+        data_shape = view.shape
+        data_dim = data_shape[-1]
+        time_steps = data_shape[-2]
+
+        hyperparameters = parameters[view_names[view_idx]]
+        model_parameters = dict()
+        training_parameters = dict()
+        for parameter in hyperparameters.keys():
+            if parameter != "batch_size" and parameter != "epochs" and parameter != "optimizer":
+                model_parameters[parameter] = hyperparameters[parameter]
+            else:
+                training_parameters[parameter] = hyperparameters[parameter]
+
+        model = create_encoding_lstm(time_steps=time_steps, data_dim=data_dim, output=output, **model_parameters)
+        model.fit(view, target_labels, verbose=verbose, **training_parameters)
+        # serialize model to JSON
+        model_json = model.to_json()
+        with open(os.path.join(output_folder, "%s.json" % view_names[view_idx]), "w+") as json_file:
+            json_file.write(model_json)
+        # serialize weights to HDF5
+        model.save_weights(os.path.join(output_folder, "%s.h5" % view_names[view_idx]))
+        print("Saved %s model to disk" % view_names[view_idx])
+
+        extractor = Model(model.input, model.get_layer("last_layer").output)
+        extractor.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
+
+        features = [np.concatenate(
+            (extractor.predict(np.expand_dims(instance, axis=0)).reshape(-1,), label.reshape(-1,)),
+            axis=-1
+        ).tolist()
+                    for instance, label
+                    in zip(view, encoder.inverse_transform(target_labels))]
+
+        header = [["HU_%s" % num for num in range(1, len(features[0]))] + ["Class"]]
+        matrix = header + features
+        am.create_arff(matrix, encoder.classes_, output_folder, view_names[view_idx], view_names[view_idx] + "_lstm")

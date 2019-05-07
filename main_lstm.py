@@ -16,7 +16,7 @@ from tools import config
 # folder = "/media/sutadasuto/OS/Users/Sutadasuto/Google Drive/INAOE/Thesis/Real-life_Deception_Detection_2016/Clips_/covarep_features"
 # folder = "/media/winbuntu/google-drive/INAOE/Thesis/SpanishDatabase/Aborto_Amigo_/covarep_features"
 
-dataset_name = "court_full"
+dataset_name = "aborto_amigo"
 print("\n****\nWorking the %s database\n****\n" % dataset_name)
 database_folder, plot_title, transcripts_folder, audios_folder, \
 of_target_folder, covarep_target_folder, datasets_folder, complementarity_folder \
@@ -62,4 +62,6 @@ custom_folds, custom_dicts = sa.get_cross_iterable(
 #
 # vgg.vgg_fine_tuning("/media/winbuntu/google-drive/INAOE/Thesis/Real-life_Deception_Detection_2016/Clips_/faces", batch_size=16, verbose=1)
 
-lstm.views_grid_search([acoustical_views, visual_views], custom_folds, seq_reduction_method, reduction_parameter)
+# lstm.views_grid_search([acoustical_views, visual_views], custom_folds, seq_reduction_method, reduction_parameter)
+lstm.views_train_features("/media/winbuntu/google-drive/INAOE/Thesis/SpanishDatabase/Aborto_Amigo_/grid_search_results.txt",
+                          [acoustical_views, visual_views], seq_reduction_method, reduction_parameter)

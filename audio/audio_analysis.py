@@ -139,6 +139,27 @@ def get_statistics_covarep(databaseFolder, processedDataFolder=None, outputFileN
         files.write("\n".join(analyzedFiles))
 
 
+def get_statistics_independently(arff_file):
+    matrix, labels, relation, attributes = am.arff_to_nparray(arff_file)
+    classes = list(set(labels))
+    labels = labels.reshape(-1, 1)
+    folder, name = os.path.split(arff_file)
+    if folder == "":
+        folder = os.getcwd()
+    stats_names = ['max', 'min', 'mean', 'median', 'std', 'var', 'kurt', 'skew', 'percentile25', 'percentile50',
+                   'percentile75']
+
+    for stat in stats_names:
+        indices = []
+        subname = name.replace(".arff", "_%s" % stat)
+        for attribute in attributes:
+            if attribute.endswith(stat):
+                indices.append(attributes.index(attribute))
+        submatrix = np.concatenate((matrix[:, indices], labels), axis=-1)
+        subheader = np.concatenate((np.array(attributes)[indices], np.array(["Class"])), axis=-1).reshape(1,-1)
+        am.create_arff(np.concatenate((subheader, submatrix), axis=0).tolist(), classes, folder, subname, subname)
+
+
 def get_statistics_per_category(databaseFolder, processedDataFolder=None):
 
     if processedDataFolder == None:

@@ -35,7 +35,7 @@ def early_fusion(datasetsFolder, fileNames=None, exceptions=[], targetFileFolder
     if outputFileName == None:
         outputFileName = "early_fusion"
     if targetFileFolder == None:
-        targetFileFolder == datasetsFolder
+        targetFileFolder = datasetsFolder
     [mMatrix, classes, relationName] = am.arffs_to_matrix(datasetsFolder, fileNames, exceptions)
     if relation == None:
         relation = relationName
@@ -493,10 +493,14 @@ class BSSD:
             real_labels = self.labels[pair[1]]
             predicted_labels = list_of_labels[fold]
             accuracy.append(metrics.accuracy_score(real_labels, predicted_labels))
-            auc.append(
-                metrics.roc_auc_score(preprocessing.label_binarize(real_labels, classes=list(reversed(self.classes))),
-                                      preprocessing.label_binarize(predicted_labels,
-                                                                   classes=list(reversed(self.classes)))))
+            try:
+                auc.append(
+                    metrics.roc_auc_score(preprocessing.label_binarize(real_labels, classes=list(reversed(self.classes))),
+                                          preprocessing.label_binarize(predicted_labels,
+                                                                       classes=list(reversed(self.classes)))))
+            except:
+                print("AUC cannot be calculated")
+                auc.append(0)
             for idx, value in enumerate(list_of_labels[fold]):
                 position = pair[1][idx]
                 labels[position] = value
@@ -520,23 +524,23 @@ class BSSD:
     def get_plots_path(self):
         return self.plots_path
 
-    def plot_best_views(self, destination=None, filename=None):
+    def plot_best_views(self, boost_estimators, destination=None, filename=None):
         if destination == None:
             destination = os.path.join(os.getcwd(), "bssd_plots", "best_views")
         if filename == None:
             filename = self.modality
         num_views = len(self.dataset_names)
         title = "Best views during training for %s modality" % (self.modality)
-        data = [estimator[1] for estimator in self.boost_estimators]
+        data = [estimator[1] for estimator in boost_estimators]
         plots.s3db_best_views(data, num_views, title, destination, filename)
 
-    def plot_distributions(self, destination=None):
+    def plot_distributions(self, boost_estimators, model_weights, destination=None):
         if destination == None:
             destination = os.path.join(os.getcwd(), "bssd_plots", "distributions")
         title = "Training Weights - %s modality" % (self.modality)
-        data = self.model_weights
+        data = model_weights
         views = self.dataset_names
-        best_views = [estimator[1] for estimator in self.boost_estimators]
+        best_views = [estimator[1] for estimator in boost_estimators]
         folder = os.path.join(destination, self.modality)
         plots.s3db_distributions(data, views, best_views, title, folder)
 
@@ -623,7 +627,7 @@ class BSSD:
         if not cross_validating:
             return model_weights
         else:
-            return boost_estimators, alpha
+            return boost_estimators, alpha, model_weights
 
     def train_folds(self, fold, pair, num_folds, plot_errors, plot_best_views, plot_distributions):
 
@@ -637,17 +641,17 @@ class BSSD:
         train_data = tuple(train_data)
         test_data = tuple(test_data)
         model_weights = [[1.0 / len(train_labels) for i in range(len(train_labels))] for j in range(self.k_max)]
-        boost_estimators, alpha = self.train(train_data, train_labels, model_weights, num_folds, True)
+        boost_estimators, alpha, model_weights = self.train(train_data, train_labels, model_weights, num_folds, True)
         if plot_errors:
             self.plot_errors(destination=
                              os.path.join(self.get_plots_path(), "errors", "Fold%s" % (fold))
                              )
         if plot_best_views:
-            self.plot_best_views(destination=
+            self.plot_best_views(boost_estimators, destination=
                                  os.path.join(self.get_plots_path(), "best_views", "Fold%s" % (fold))
                                  )
         if plot_distributions:
-            self.plot_distributions(destination=
+            self.plot_distributions(boost_estimators, model_weights, destination=
                                     os.path.join(self.get_plots_path(), "distributions", "Fold%s" % (fold))
                                     )
         predicted_test_labels = self.predict(test_data, boost_estimators, alpha)
@@ -1050,10 +1054,14 @@ class BSSD2_2(BSSD):
             real_labels = self.labels[pair[1]]
             predicted_labels = list_of_labels[fold]
             accuracy.append(metrics.accuracy_score(real_labels, predicted_labels))
-            auc.append(
-                metrics.roc_auc_score(preprocessing.label_binarize(real_labels, classes=list(reversed(self.classes))),
-                                      preprocessing.label_binarize(predicted_labels,
-                                                                   classes=list(reversed(self.classes)))))
+            try:
+                auc.append(
+                    metrics.roc_auc_score(preprocessing.label_binarize(real_labels, classes=list(reversed(self.classes))),
+                                          preprocessing.label_binarize(predicted_labels,
+                                                                       classes=list(reversed(self.classes)))))
+            except:
+                print("AUC cannot be calculated")
+                auc.append(0)
             for idx, value in enumerate(list_of_labels[fold]):
                 position = pair[1][idx]
                 labels[position] = value
@@ -1330,17 +1338,17 @@ class S4DB(BSSD):
         train_data = tuple(train_data)
         test_data = tuple(test_data)
         model_weights = [[1.0 / len(train_labels) for i in range(len(train_labels))] for j in range(self.k_max)]
-        boost_estimators, alpha = self.train(train_data, train_labels, model_weights, num_folds, True)
+        boost_estimators, alpha, model_weights = self.train(train_data, train_labels, model_weights, num_folds, True)
         if plot_errors:
             self.plot_errors(destination=
                              os.path.join(self.get_plots_path(), "errors", "Fold%s" % (fold))
                              )
         if plot_best_views:
-            self.plot_best_views(destination=
+            self.plot_best_views(boost_estimators, destination=
                                  os.path.join(self.get_plots_path(), "best_views", "Fold%s" % (fold))
                                  )
         if plot_distributions:
-            self.plot_distributions(destination=
+            self.plot_distributions(boost_estimators, model_weights, destination=
                                     os.path.join(self.get_plots_path(), "distributions", "Fold%s" % (fold))
                                     )
         train_stacking_dataset = self.get_stacking_dataset(train_data, boost_estimators, alpha)

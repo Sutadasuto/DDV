@@ -11,7 +11,7 @@ import pandas
 import numpy as np
 
 
-def get_input_sequences(input_data, padding="avg"):
+def get_input_sequences(input_data, padding="avg", return_class_encoder=False):
     classes = sorted([f for f in os.listdir(input_data)
                       if os.path.isdir(os.path.join(input_data, f)) and not f.startswith('.')],
                      key=lambda f: f.lower())
@@ -49,7 +49,10 @@ def get_input_sequences(input_data, padding="avg"):
     encoder = LabelEncoder()
     encoder.fit(Y)
     Y = encoder.transform(Y)
-    return X, Y
+    if return_class_encoder:
+        return X, Y, encoder
+    else:
+        return X, Y
 
 
 def kmeans_frame_selection(frames, k=20, seed=0):

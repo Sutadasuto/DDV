@@ -1,21 +1,14 @@
-import os
-import csv
-import numpy as np
-from shutil import copyfile
-from joblib import Parallel, delayed
-import time
-import multiprocessing
+def warn(*args, **kwargs):
+    pass
+import warnings
+warnings.warn = warn
 
-from audio import audio_analysis as a
-from video import video_analysis as v
-from text import text_analysis as t
-from tools import config
-import tools.prune as prune
+import numpy as np
+import os
 import tools.subject_analysis as sa
 import tools.arff_and_matrices as am
 import tools.machine_learning as ml
 import tools.multimodal_fusion as fusion
-import tools.multimodal_fusion_2 as fusion2
 
 from sklearn.model_selection import LeaveOneOut
 
@@ -29,25 +22,75 @@ from sklearn.linear_model import LogisticRegression
 
 loo = LeaveOneOut()
 
-clf = LinearSVC(random_state=10, tol=1e-7, max_iter=3000)
+clf = LinearSVC(random_state=0, tol=1e-7, max_iter=3000)
+clf_2 = GaussianNB()
+clf = SVC(random_state=0, tol=1e-7, max_iter=3000, kernel='poly', C=0.01, probability=True)
+# clf = GaussianNB()
+# clf = RandomForestClassifier(random_state=0, n_estimators=100)
+# clf2 = RandomForestClassifier(random_state=0, n_estimators=100)
+clf_2 = LinearSVC(random_state=0, tol=1e-7, max_iter=3000)
 
-datasets_folder = "/media/sutadasuto/OS/Users/Sutadasuto/Google Drive/INAOE/Thesis/Real-life_Deception_Detection_2016/Clips_/datasets/visual"
-data = "au_intensity"
-subjects_dict = "/media/sutadasuto/OS/Users/Sutadasuto/Google Drive/INAOE/Thesis/Real-life_Deception_Detection_2016/Clips/subjects.txt"
+datasets_folder = "/media/winbuntu/google-drive/INAOE/Thesis/SpanishDatabase/Aborto_Amigo_/datasets"
+data = "best_views_cv"
+subjects_dict = "/media/winbuntu/google-drive/INAOE/Thesis/SpanishDatabase/Aborto_Amigo/subjects.txt"
 num_folds = 10
 
 custom_folds, custom_dicts = sa.get_cross_iterable(
     sa.get_dict(subjects_dict),
     num_folds, processedDataFolder=datasets_folder
 )
-
+#custom_folds=42
+fusion_name = "all"
 files_list = sorted([os.path.join(data, f) for f in os.listdir(os.path.join(datasets_folder, data))
                           if os.path.isfile(os.path.join(datasets_folder, data, f)) and not f.startswith('.')
-                            and f.endswith(".arff")], key=lambda f: f.lower())
-matrix_1 = ml.complementarity_analysis(clf, datasets_folder, files_list, folds=custom_folds)
-matrix_2 = ml.complementarity_analysis(clf, datasets_folder, [data + ".arff"], folds=custom_folds)
-matrix_3 = ml.my_method(
-                fusion.S4DB(clf, clf, data, datasets_folder),
-                datasets_folder, custom_folds, "bssd_views"
+                            and f.endswith(".arff") and not f.startswith(fusion_name)], key=lambda f: f.lower())
+fusion.early_fusion(datasets_folder, files_list, targetFileFolder=os.path.join(datasets_folder, data), outputFileName=fusion_name, relation=fusion_name)
+# files_list = [os.path.join(data, f) for f in ["au_presence.arff", "gaze.arff"]]
+
+matrices = []
+
+matrix = ml.complementarity_analysis(clf, datasets_folder, files_list, folds=custom_folds)
+matrices.append(matrix)
+matrix = ml.complementarity_analysis(clf, datasets_folder, [os.path.join(data, fusion_name + ".arff")], folds=custom_folds)
+matrices.append(matrix)
+matrix = ml.hard_majority_vote_evaluation(clf, datasets_folder, files_list,
+                                                      custom_folds, "majority_vote_views")
+matrices.append(matrix)
+matrix = ml.proba_majority_vote_evaluation(clf, datasets_folder, files_list,
+                                                      custom_folds, "majority_vote_proba_views")
+matrices.append(matrix)
+matrix = ml.stacking_evaluation(clf, datasets_folder, files_list,
+                                            custom_folds, "stacking_views")
+matrices.append(matrix)
+matrix = ml.stacking_proba_evaluation(clf, datasets_folder, files_list,
+                                            custom_folds, "stacking_proba_views")
+matrices.append(matrix)
+matrix = ml.my_method(
+                fusion.BSSD(clf, data, datasets_folder),
+                datasets_folder, custom_folds, "bssd_views", False
             )
-a=0
+matrices.append(matrix)
+matrix = ml.my_method(
+                fusion.S4DB(clf, clf_2, data, datasets_folder),
+                datasets_folder, custom_folds, "stacking_bssd_views", False
+            )
+matrices.append(matrix)
+# matrix = ml.my_method(
+#                 fusion.BSSD2(clf, data, datasets_folder),
+#                 datasets_folder, custom_folds, "bssd_cv_views", False
+#             )
+# matrices.append(matrix)
+matrix = ml.my_method(
+                fusion.S3DB(clf, clf_2, ["best_visual_views_cv", "best_acoustic_views_cv"], datasets_folder,
+                            file_exceptions=["all.arff"]),
+                datasets_folder, custom_folds, "hierarchical_bssd"
+            )
+matrices.append(matrix)
+
+matrix = ml.concatenate_result_matrices(matrices)
+firstColumn = np.concatenate((np.array(["", ""]), matrix[0, 1:-1]))
+
+classifierResults = [
+    np.column_stack((np.array([[str(clf).split("(")[0]], [""]]), matrix[-2:, :-1])).transpose()]
+
+am.matrices_comparison(classifierResults, firstColumn, os.getcwd(), plot_title="Spanish Database")

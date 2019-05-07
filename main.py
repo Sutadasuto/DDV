@@ -1,3 +1,8 @@
+def warn(*args, **kwargs):
+    pass
+import warnings
+warnings.warn = warn
+
 import os
 import csv
 import numpy as np
@@ -26,10 +31,6 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 
 print("Libraries loaded.")
-def warn(*args, **kwargs):
-    pass
-import warnings
-warnings.warn = warn
 
 beginning = time.time()
 classifierList = [
@@ -43,7 +44,7 @@ classifierList = [
 ]
 print("List of classifiers ready.")
 
-dataset_name = "court_full_16"
+dataset_name = "court_full"
 fps = 29.97
 print("Working the %s database" % dataset_name)
 database_folder, plot_title, transcripts_folder, audios_folder, \
