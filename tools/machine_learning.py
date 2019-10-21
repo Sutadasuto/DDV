@@ -235,6 +235,17 @@ def concatenate_result_matrices(matrices):
     return matrix
 
 
+def early_fusion_from_numpy(classifier, train_datasets, train_labels, validation_datasets):
+
+    train_datasets = tuple([np.array(dataset) for dataset in train_datasets])
+    train_data = np.concatenate(train_datasets, axis=-1)
+    classifier.fit(train_data, train_labels)
+    validation_datasets = tuple([np.array(dataset) for dataset in validation_datasets])
+    validation_data = np.concatenate(validation_datasets, axis=-1)
+    predicted_labels = classifier.predict_proba(validation_data)
+    return predicted_labels
+
+
 def evaluate_single_features(classifier, arffInput, folds=None):
 
     if folds == None:
@@ -394,6 +405,29 @@ def hard_majority_vote_evaluation(classifier, databasesFolder=None, modalityFile
     return resultMatrix
 
 
+def hard_majority_vote_from_numpy(classifier, train_datasets, train_labels, validation_datasets):
+    predictionLists = []
+    for modality_idx, modality in enumerate(train_datasets):
+        classes = list(set(train_labels))
+        classes.sort()
+        classifier.fit(modality, train_labels)
+        predictionLists.append(classifier.predict(validation_datasets[modality_idx]))
+        # predictionLists.append(model.cross_val_predict(classifier, matrix, labels, cv=folds))
+    predictedLabels = []
+    for instance in range(len(predictionLists[0])):
+        votes = [modality[instance] for modality in predictionLists]
+        probabilities = [0 for i in range(len(classes))]
+        for class_idx, classLabel in enumerate(classes):
+            classVotes = votes.count(classLabel)
+            probabilities[class_idx] = classVotes
+        probabilities = np.array(probabilities).astype(float)
+        total = sum(probabilities)
+        for class_idx, classLabel in enumerate(classes):
+            probabilities[class_idx] /= total
+        predictedLabels.append(probabilities)
+    return predictedLabels
+
+
 def mutual_information_evaluation(arffInput):
 
     samples, classLabels, relation, attributeNames = am.arff_to_nparray(arffInput)
@@ -542,6 +576,25 @@ def proba_majority_vote_evaluation(classifier, databasesFolder=None, modalityFil
     return resultMatrix
 
 
+def proba_majority_vote_from_numpy(classifier, train_datasets, train_labels, validation_datasets):
+    predictionLists = []
+    for modality_idx, modality in enumerate(train_datasets):
+        classes = list(set(train_labels))
+        classes.sort()
+        classifier.fit(modality, train_labels)
+        predictionLists.append(classifier.predict_proba(validation_datasets[modality_idx]))
+        # predictionLists.append(model.cross_val_predict(classifier, matrix, labels, cv=folds))
+    predictedLabels = []
+    for instance in range(len(predictionLists[0])):
+        votes = np.array([modality[instance] for modality in predictionLists]).astype(float)
+        total_votes = np.sum(votes, axis=0)
+        total = sum(total_votes)
+        for class_idx, classLabel in enumerate(classes):
+            total_votes[class_idx] /= total
+        predictedLabels.append(total_votes)
+    return predictedLabels
+
+
 def stacking_evaluation(classifier, databasesFolder=None, modalityFiles=None, folds=None, relationName=None):
 
     if databasesFolder == None:
@@ -630,6 +683,27 @@ def stacking_evaluation(classifier, databasesFolder=None, modalityFiles=None, fo
     resultMatrix[resultMatrix == "True"] = "1"
     resultMatrix[resultMatrix == "False"] = "0"
     return resultMatrix
+
+
+def stacking_from_numpy(classifier, stacker, train_datasets, train_labels, validation_datasets):
+    predictionLists = []
+    test_predictions = []
+    views = []
+    for modality_idx, modality in enumerate(train_datasets):
+        classes = list(set(train_labels))
+        classes.sort()
+        classifier.fit(modality, train_labels)
+        prediction = classifier.predict(modality)
+        prediction = prediction.reshape(-1, 1)
+        test_prediction = classifier.predict(validation_datasets[modality_idx])
+        test_prediction = test_prediction.reshape(-1, 1)
+        predictionLists.append(preprocessing.label_binarize(prediction, neg_label=-1, classes=classes))
+        test_predictions.append(preprocessing.label_binarize(test_prediction, neg_label=-1, classes=classes))
+    newMatrix = np.column_stack(tuple(predictionLists))
+    new_test_matrix = np.column_stack(tuple(test_predictions))
+    stacker.fit(newMatrix, train_labels)
+    predictedLabels = stacker.predict_proba(new_test_matrix)
+    return predictedLabels
 
 
 def stacking_proba_evaluation(classifier, databasesFolder=None, modalityFiles=None, folds=None, relationName=None):
@@ -758,3 +832,38 @@ def stacking_proba_evaluation(classifier, databasesFolder=None, modalityFiles=No
     resultMatrix[resultMatrix == "True"] = "1"
     resultMatrix[resultMatrix == "False"] = "0"
     return resultMatrix
+
+
+def stacking_proba_from_numpy(classifier, stacker, train_datasets, train_labels, validation_datasets):
+    predictionLists = []
+    test_predictions = []
+    views = []
+    for modality_idx, modality in enumerate(train_datasets):
+        classes = list(set(train_labels))
+        classes.sort()
+        classifier.fit(modality, train_labels)
+        probabilities = classifier.predict_proba(modality)
+        test_probability = classifier.predict_proba(validation_datasets[modality_idx])
+
+        prediction = []
+        for couple in probabilities:
+            labelIndex = couple.tolist().index(max(couple))
+            if labelIndex == 0:
+                prediction.append(float(-couple[labelIndex]))
+            elif labelIndex == 1:
+                prediction.append(float(couple[labelIndex]))
+
+        test_prediction = []
+        for couple in test_probability:
+            labelIndex = couple.tolist().index(max(couple))
+            if labelIndex == 0:
+                test_prediction.append(float(-couple[labelIndex]))
+            elif labelIndex == 1:
+                test_prediction.append(float(couple[labelIndex]))
+        predictionLists.append(prediction)
+        test_predictions.append(test_prediction)
+    newMatrix = np.column_stack(tuple(predictionLists))
+    new_test_matrix = np.column_stack(tuple(test_predictions))
+    stacker.fit(newMatrix, train_labels)
+    predictedLabels = stacker.predict_proba(new_test_matrix)
+    return predictedLabels

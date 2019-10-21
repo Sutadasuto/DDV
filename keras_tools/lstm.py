@@ -14,7 +14,9 @@ from keras.models import Sequential
 from keras.utils import plot_model
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras_tools.attention_layers import Attention, AttentionWithContext
+from sklearn import preprocessing
 from sklearn.model_selection import cross_val_score, StratifiedKFold, LeaveOneOut
+from sklearn.preprocessing import LabelEncoder
 
 import copy
 import csv
@@ -26,7 +28,9 @@ import keras_tools.validation as metrics
 import numpy as np
 import os
 import pandas
+import sklearn.metrics as metrics
 import tools.arff_and_matrices as am
+import tools.machine_learning as ml
 
 
 def create_basic_lstm(hu=20, timesteps=1, data_dim=1, output=1, dropout=None, gpu=True):
@@ -1021,12 +1025,14 @@ def create_encoding_lstm(hu, time_steps, data_dim, output, dropout=0, gpu=True):
     # create model
     model = Sequential()
     if gpu:
-        model.add(CuDNNLSTM(hu, return_sequences=False, input_shape=(time_steps, data_dim), name="last_layer"))
+        model.add(CuDNNLSTM(hu, return_sequences=False, input_shape=(time_steps, data_dim), name="lstm"))
     else:
-        model.add(LSTM(hu, return_sequences=False, input_shape=(time_steps, data_dim), name="last_layer"))
+        model.add(LSTM(hu, return_sequences=False, input_shape=(time_steps, data_dim), name="lstm"))
     # model.add(Attention())
-    model.add(Dropout(dropout, seed=0))
-    model.add(Dense(output, activation="sigmoid"))
+    model.add(Dropout(dropout, seed=0, name="dropout1"))
+    hu2 = max(1, int(hu/2))
+    # model.add(Dense(hu2, activation="sigmoid", name="fc1"))
+    model.add(Dense(output, activation="sigmoid", name="fc2"))
     model.compile(loss='binary_crossentropy',
                   optimizer='adam',
                   metrics=['accuracy'])
@@ -1238,3 +1244,594 @@ def views_train_features(hyperparameters_file, modalities, seq_reduction="paddin
         header = [["HU_%s" % num for num in range(1, len(features[0]))] + ["Class"]]
         matrix = header + features
         am.create_arff(matrix, encoder.classes_, output_folder, view_names[view_idx], view_names[view_idx] + "_lstm")
+
+
+def views_train_features_cv(hyperparameters_file, modalities, cv=10, seq_reduction="padding", reduction="avg", output_folder=None,
+                         verbose=2):
+
+    if modalities is str:
+        if modalities.endswith(".npy"):
+            loaded_array = np.load(modalities)
+            X = loaded_array[0]
+            Y = loaded_array[1]
+    else:
+        if seq_reduction == "padding":
+            length = reduction
+        else:
+            length = None
+        X = []
+        Y = []
+        view_names = []
+        for stream_idx, stream in enumerate(modalities):
+            X_m = []
+            Y_m = []
+            for view in stream:
+                view_names.append(os.path.split(view)[-1].replace(".arff",""))
+                X_idx, Y_idx, encoder = sequences.get_input_sequences(view, length, True)
+                X_m.append(X_idx)
+                Y_m.append(Y_idx)
+            X.append(X_m)
+            Y.append(Y_m)
+        if seq_reduction == "padding":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding(modality)
+        elif seq_reduction == "kmeans":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.kmeans_seq_reduction(modality, k=reduction)
+        elif seq_reduction == "pad_means":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding_means(modality, reduction)
+        elif seq_reduction == "sync_kmeans":
+            for mod_idx, modality in enumerate(X):
+                modality = sequences.synchronize_views(modality)
+                X[mod_idx] = sequences.kmeans_sync_seq_reduction(modality, k=reduction)
+
+    if output_folder is None:
+        output_folder = os.path.join(os.getcwd(), "tuned_models")
+
+    if not os.path.exists(output_folder):
+        os.mkdir(output_folder)
+
+    X = [item for sublist in X for item in sublist]
+    Y = [item for sublist in Y for item in sublist]
+
+    if type(cv) is int:
+        folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
+        folds = [fold for fold in folds.split(X[0], Y[0])]
+    elif cv == "loo":
+        folds = [fold for fold in LeaveOneOut().split(X[0])]
+    else:
+        folds = cv
+
+    with open(hyperparameters_file) as grid:
+
+        import ast
+        view_found = False
+        lines = grid.readlines()
+        parameters = dict()
+        for line in lines:
+            if line.startswith("View: "):
+                view_name = line.strip().replace("View: ", "")
+                parameters[view_name] = None
+                view_found = True
+            elif view_found == True:
+                parameters_dict = line.split(" using ")[1]
+                parameters[view_name] = ast.literal_eval(parameters_dict)
+                view_found = False
+
+    for view_idx, view in enumerate(X):
+        target_labels = Y[view_idx]
+        if len(target_labels.shape) == 1:
+            output = 1
+        else:
+            output = target_labels.shape[-1]
+        data_shape = view.shape
+        data_dim = data_shape[-1]
+        time_steps = data_shape[-2]
+
+        hyperparameters = parameters[view_names[view_idx]]
+        model_parameters = dict()
+        training_parameters = dict()
+        for parameter in hyperparameters.keys():
+            if parameter != "batch_size" and parameter != "epochs" and parameter != "optimizer":
+                model_parameters[parameter] = hyperparameters[parameter]
+            else:
+                training_parameters[parameter] = hyperparameters[parameter]
+
+        features = [np.array([]) for n in range(data_shape[0])]
+        for pair in folds:
+            x_train = view[pair[0]]
+            x_test = view[pair[1]]
+            y_train = target_labels[pair[0]]
+            y_test = target_labels[pair[1]]
+
+            model = create_encoding_lstm(time_steps=time_steps, data_dim=data_dim, output=output, **model_parameters)
+            model.fit(x_train, y_train, validation_data=(x_test, y_test), verbose=verbose, **training_parameters)
+
+            extractor = Model(model.input, model.get_layer("last_layer").output)
+            extractor.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
+
+            test_features = [np.concatenate(
+                (extractor.predict(np.expand_dims(instance, axis=0)).reshape(-1,), label.reshape(-1,)),
+                axis=-1
+            ).tolist()
+                        for instance, label
+                        in zip(x_test, encoder.inverse_transform(y_test))]
+
+            for idx, instance in enumerate(test_features):
+                features[pair[1][idx]] = instance
+
+            del model, extractor
+
+        header = [["HU_%s" % num for num in range(1, len(features[0]))] + ["Class"]]
+        matrix = header + features
+        am.create_arff(matrix, encoder.classes_, output_folder, view_names[view_idx], view_names[view_idx] + "_lstm")
+
+
+def cross_val_score(hyperparameters_file, modalities, clf, cv=10, scoring="accuracy", seq_reduction="padding",
+                    reduction="avg", verbose=2):
+
+    if modalities is str:
+        if modalities.endswith(".npy"):
+            loaded_array = np.load(modalities)
+            X = loaded_array[0]
+            Y = loaded_array[1]
+    else:
+        if seq_reduction == "padding":
+            length = reduction
+        else:
+            length = None
+        X = []
+        Y = []
+        view_names = []
+        for stream_idx, stream in enumerate(modalities):
+            X_m = []
+            Y_m = []
+            for view in stream:
+                view_names.append(os.path.split(view)[-1].replace(".arff",""))
+                X_idx, Y_idx, encoder = sequences.get_input_sequences(view, length, True)
+                X_m.append(X_idx)
+                Y_m.append(Y_idx)
+            X.append(X_m)
+            Y.append(Y_m)
+        if seq_reduction == "padding":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding(modality)
+        elif seq_reduction == "kmeans":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.kmeans_seq_reduction(modality, k=reduction)
+        elif seq_reduction == "pad_means":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding_means(modality, reduction)
+        elif seq_reduction == "sync_kmeans":
+            for mod_idx, modality in enumerate(X):
+                modality = sequences.synchronize_views(modality)
+                X[mod_idx] = sequences.kmeans_sync_seq_reduction(modality, k=reduction)
+
+    X = [item for sublist in X for item in sublist]
+    Y = [item for sublist in Y for item in sublist]
+
+    if type(cv) is int:
+        folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
+        folds = [fold for fold in folds.split(X[0], Y[0])]
+    elif cv == "loo":
+        folds = [fold for fold in LeaveOneOut().split(X[0])]
+    else:
+        folds = cv
+
+    with open(hyperparameters_file) as grid:
+
+        import ast
+        view_found = False
+        lines = grid.readlines()
+        parameters = dict()
+        for line in lines:
+            if line.startswith("View: "):
+                view_name = line.strip().replace("View: ", "")
+                parameters[view_name] = None
+                view_found = True
+            elif view_found == True:
+                parameters_dict = line.split(" using ")[1]
+                parameters[view_name] = ast.literal_eval(parameters_dict)
+                view_found = False
+
+    matrix = [["View", scoring]]
+    for view_idx, view in enumerate(X):
+        target_labels = Y[view_idx]
+        if len(target_labels.shape) == 1:
+            output = 1
+        else:
+            output = target_labels.shape[-1]
+        data_shape = view.shape
+        data_dim = data_shape[-1]
+        time_steps = data_shape[-2]
+
+        hyperparameters = parameters[view_names[view_idx]]
+        model_parameters = dict()
+        training_parameters = dict()
+        for parameter in hyperparameters.keys():
+            if parameter != "batch_size" and parameter != "epochs" and parameter != "optimizer":
+                model_parameters[parameter] = hyperparameters[parameter]
+            else:
+                training_parameters[parameter] = hyperparameters[parameter]
+
+        scores = []
+        print("View: %s" % view_names[view_idx])
+        for pair in folds:
+            x_train = view[pair[0]]
+            x_test = view[pair[1]]
+            y_train = target_labels[pair[0]]
+            y_test = target_labels[pair[1]]
+
+            model = create_encoding_lstm(time_steps=time_steps, data_dim=data_dim, output=output, **model_parameters)
+            model.fit(x_train, y_train, validation_data=(x_test, y_test), verbose=verbose, **training_parameters)
+
+            extractor = Model(model.input, model.get_layer("last_layer").output)
+            extractor.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
+
+            train_features = extractor.predict(x_train)
+            test_features = extractor.predict(x_test)
+
+            clf.fit(train_features, y_train)
+            y_pred = clf.predict_proba(test_features)
+
+            if scoring == "roc_auc":
+                y_pred = y_pred[...,-1]
+                scores.append(metrics.roc_auc_score(y_test, y_pred))
+            if scoring == "accuracy":
+                y_pred = np.argmax(y_pred, axis=-1)
+                scores.append(metrics.accuracy_score(y_test, y_pred))
+            del model, extractor
+        print("%s: %s" % (scoring, np.array(scores).mean()))
+        matrix.append([view_names[view_idx], np.array(scores).mean()])
+
+    with open("file.txt", "w+") as o:
+        writer = csv.writer(o)
+        writer.writerows(matrix)
+
+
+def boosting_cross_val_score(hyperparameters_file, modalities, booster, stacker, cv=10, scoring="accuracy", seq_reduction="padding",
+                    reduction="avg", verbose=2):
+
+    if modalities is str:
+        if modalities.endswith(".npy"):
+            loaded_array = np.load(modalities)
+            X = loaded_array[0]
+            Y = loaded_array[1]
+    else:
+        if seq_reduction == "padding":
+            length = reduction
+        else:
+            length = None
+        X = []
+        Y = []
+        view_names = []
+        for stream_idx, stream in enumerate(modalities):
+            X_m = []
+            Y_m = []
+            for view in stream:
+                view_names.append(os.path.split(view)[-1].replace(".arff",""))
+                X_idx, Y_idx, encoder = sequences.get_input_sequences(view, length, True)
+                X_m.append(X_idx)
+                Y_m.append(Y_idx)
+            X.append(X_m)
+            Y.append(Y_m)
+        if seq_reduction == "padding":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding(modality)
+        elif seq_reduction == "kmeans":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.kmeans_seq_reduction(modality, k=reduction)
+        elif seq_reduction == "pad_means":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding_means(modality, reduction)
+        elif seq_reduction == "sync_kmeans":
+            for mod_idx, modality in enumerate(X):
+                modality = sequences.synchronize_views(modality)
+                X[mod_idx] = sequences.kmeans_sync_seq_reduction(modality, k=reduction)
+
+    X = [item for sublist in X for item in sublist]
+    Y = [item for sublist in Y for item in sublist]
+
+    if type(cv) is int:
+        folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
+        folds = [fold for fold in folds.split(X[0], Y[0])]
+    elif cv == "loo":
+        folds = [fold for fold in LeaveOneOut().split(X[0])]
+    else:
+        folds = cv
+
+    with open(hyperparameters_file) as grid:
+
+        import ast
+        view_found = False
+        lines = grid.readlines()
+        parameters = dict()
+        for line in lines:
+            if line.startswith("View: "):
+                view_name = line.strip().replace("View: ", "")
+                parameters[view_name] = None
+                view_found = True
+            elif view_found == True:
+                parameters_dict = line.split(" using ")[1]
+                parameters[view_name] = ast.literal_eval(parameters_dict)
+                view_found = False
+
+    from tools import multimodal_fusion as fusion
+    scores = []
+    matrix = [["Method", scoring]]
+    for pair in folds:
+        train_datasets = []
+        test_datasets = []
+        train_labels = []
+        test_labels = []
+        view_scores = []
+        for view_idx, view in enumerate(X):
+            target_labels = Y[view_idx]
+            if len(target_labels.shape) == 1:
+                output = 1
+            else:
+                output = target_labels.shape[-1]
+            data_shape = view.shape
+            data_dim = data_shape[-1]
+            time_steps = data_shape[-2]
+
+            hyperparameters = parameters[view_names[view_idx]]
+            model_parameters = dict()
+            training_parameters = dict()
+            for parameter in hyperparameters.keys():
+                if parameter != "batch_size" and parameter != "epochs" and parameter != "optimizer":
+                    model_parameters[parameter] = hyperparameters[parameter]
+                else:
+                    training_parameters[parameter] = hyperparameters[parameter]
+
+            x_train = view[pair[0]]
+            x_test = view[pair[1]]
+            y_train = target_labels[pair[0]]
+            y_test = target_labels[pair[1]]
+
+            model = create_encoding_lstm(time_steps=time_steps, data_dim=data_dim, output=output, **model_parameters)
+            model.fit(x_train, y_train, validation_data=(x_test, y_test), verbose=verbose, **training_parameters)
+
+            feature_layer = "lstm"
+            extractor = Model(model.input, model.get_layer(feature_layer).output)
+            extractor.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
+
+            train_features = extractor.predict(x_train)
+            train_datasets.append(train_features)
+            test_features = extractor.predict(x_test)
+            test_datasets.append(test_features)
+
+            booster.fit(train_features, y_train)
+            y_pred = booster.predict_proba(test_features)
+            if scoring == "roc_auc":
+                y_real = np.array([[0 for i in range(len(set(y_test)))] for j in range(len(y_test))])
+                for idx, instance in enumerate(y_test):
+                    y_real[idx][instance] = 1
+                roc_auc = metrics.roc_auc_score(y_real, y_pred, average=None)
+                view_scores.append(roc_auc[0])
+            if scoring == "accuracy":
+                y_pred = np.argmax(y_pred, axis=-1)
+                view_scores.append(metrics.accuracy_score(y_test, y_pred))
+
+        t_methods = [ml.early_fusion_from_numpy, ml.hard_majority_vote_from_numpy, ml.proba_majority_vote_from_numpy,
+                   ml.stacking_from_numpy, ml.stacking_proba_from_numpy]
+        arguments = [
+            {"classifier": booster, "train_datasets": train_datasets, "train_labels": y_train, "validation_datasets": test_datasets},
+            {"classifier": booster, "train_datasets": train_datasets, "train_labels": y_train, "validation_datasets": test_datasets},
+            {"classifier": booster, "train_datasets": train_datasets, "train_labels": y_train, "validation_datasets": test_datasets},
+            {"classifier": booster, "stacker": stacker, "train_datasets": train_datasets, "train_labels": y_train, "validation_datasets": test_datasets},
+            {"classifier": booster, "stacker": stacker, "train_datasets": train_datasets, "train_labels": y_train, "validation_datasets": test_datasets}
+        ]
+        fusion_scores = []
+        for idx, method in enumerate(t_methods):
+            y_pred = method(**arguments[idx])
+            if scoring == "roc_auc":
+                y_real = np.array([[0 for i in range(len(set(y_test)))] for j in range(len(y_test))])
+                for instance_idx, instance in enumerate(y_test):
+                    y_real[instance_idx][instance] = 1
+                roc_auc = metrics.roc_auc_score(y_real, y_pred, average=None)
+                fusion_scores.append(roc_auc[0])
+            if scoring == "accuracy":
+                y_pred = np.argmax(y_pred, axis=-1)
+                fusion_scores.append(metrics.accuracy_score(y_test, y_pred))
+
+        methods = [fusion.BSSD_From_Numpy, fusion.S4DB_From_Numpy]
+        arguments = [
+            {"booster": booster, "modality": "multimodal", "databases": train_datasets, "labels": y_train, "dataset_names": view_names},
+            {"booster": booster, "stacker": stacker, "modality": "multimodal", "databases": train_datasets, "labels": y_train, "dataset_names": view_names}
+        ]
+        subscores = []
+        for idx, method in enumerate(methods):
+            o = method(**arguments[idx])
+            o.fit()
+            y_pred = o.predict_proba(test_datasets)
+            if scoring == "roc_auc":
+                y_real = np.array([[0 for i in range(len(set(y_test)))] for j in range(len(y_test))])
+                for instance_idx, instance in enumerate(y_test):
+                    y_real[instance_idx][instance] = 1
+                roc_auc = metrics.roc_auc_score(y_real, y_pred, average=None)
+                subscores.append(roc_auc[0])
+            if scoring == "accuracy":
+                y_pred = np.argmax(y_pred, axis=-1)
+                subscores.append(metrics.accuracy_score(y_test, y_pred))
+
+        scores.append(view_scores + fusion_scores + subscores)
+        del model, extractor
+
+    scores = np.array(scores)
+    for idx, method in enumerate(view_names + t_methods + methods):
+        name = str(method)
+        score = scores[:, idx].mean()
+        matrix.append([name, score])
+    with open("file.txt", "w+") as f:
+        writer = csv.writer(f)
+        writer.writerows(matrix)
+
+
+def create_hierarchical_encoding_lstm(input_shapes, view_dicts, output, gpu=True):
+
+    seq = []
+    lstms = []
+    for view_idx, input_shape in enumerate(input_shapes):
+        model_dict = view_dicts[view_idx]
+        # Create a LSTM for each view
+        input_data = Input(input_shape)
+        if gpu:
+            lstm = CuDNNLSTM(model_dict["hu"], input_shape=input_shape, return_sequences=False, name="lstm_%s" % view_idx)(input_data)
+        else:
+            lstm = LSTM(model_dict["hu"], input_shape=input_shape, return_sequences=False, name="lstm_%s" % view_idx)(input_data)
+        lstm = Dense(output, activation="sigmoid", name="fc_%s" % view_idx)(lstm)
+        seq.append(input_data)
+        lstms.append(lstm)
+    # Concatenate independent streams
+    dense = keras.layers.concatenate(lstms)
+    # reduction = 4
+    # num = int(K.int_shape(dense)[-1] / reduction)
+    # num = max(1, num)
+    # num_fc = 1
+    # while num > 1:
+    #     dense = Dense(num, activation="sigmoid", name="fc_%s" % num_fc)(dense)
+    #     num_fc += 1
+    #     num = int(K.int_shape(dense)[-1] / reduction)
+    #     num = max(1, num)
+    dense = Dense(output, activation="sigmoid", name="fc_last")(dense)
+    model = Model(seq, dense)
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    return model
+
+
+def hierarchical_cross_val_score(hyperparameters_file, modalities, cv=10, scoring="accuracy", seq_reduction="padding",
+                    reduction="avg", verbose=2):
+
+    if modalities is str:
+        if modalities.endswith(".npy"):
+            loaded_array = np.load(modalities)
+            X = loaded_array[0]
+            Y = loaded_array[1]
+    else:
+        if seq_reduction == "padding":
+            length = reduction
+        else:
+            length = None
+        X = []
+        Y = []
+        view_names = []
+        for stream_idx, stream in enumerate(modalities):
+            X_m = []
+            Y_m = []
+            for view in stream:
+                view_names.append(os.path.split(view)[-1].replace(".arff",""))
+                X_idx, Y_idx, encoder = sequences.get_input_sequences(view, length, True)
+                X_m.append(X_idx)
+                Y_m.append(Y_idx)
+            X.append(X_m)
+            Y.append(Y_m)
+        if seq_reduction == "padding":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding(modality)
+        elif seq_reduction == "kmeans":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.kmeans_seq_reduction(modality, k=reduction)
+        elif seq_reduction == "pad_means":
+            for mod_idx, modality in enumerate(X):
+                X[mod_idx] = sequences.multiple_sequence_padding_means(modality, reduction)
+        elif seq_reduction == "sync_kmeans":
+            for mod_idx, modality in enumerate(X):
+                modality = sequences.synchronize_views(modality)
+                X[mod_idx] = sequences.kmeans_sync_seq_reduction(modality, k=reduction)
+
+    X = [item for sublist in X for item in sublist]
+    Y = [item for sublist in Y for item in sublist]
+
+    if type(cv) is int:
+        folds = StratifiedKFold(n_splits=cv, shuffle=True, random_state=10)
+        folds = [fold for fold in folds.split(X[0], Y[0])]
+    elif cv == "loo":
+        folds = [fold for fold in LeaveOneOut().split(X[0])]
+    else:
+        folds = cv
+
+    with open(hyperparameters_file) as grid:
+
+        import ast
+        view_found = False
+        lines = grid.readlines()
+        parameters = dict()
+        for line in lines:
+            if line.startswith("View: "):
+                view_name = line.strip().replace("View: ", "")
+                parameters[view_name] = None
+                view_found = True
+            elif view_found == True:
+                parameters_dict = line.split(" using ")[1]
+                parameters[view_name] = ast.literal_eval(parameters_dict)
+                view_found = False
+
+    scores = []
+    matrix = [["Method", scoring]]
+    for pair in folds:
+        x_train = []
+        x_test = []
+        y_train = []
+        y_test = []
+        input_shapes = []
+        view_dicts = []
+        for view_idx, view in enumerate(X):
+            target_labels = Y[view_idx]
+            if len(target_labels.shape) == 1:
+                output = 1
+            else:
+                output = target_labels.shape[-1]
+            data_shape = view.shape
+            data_dim = data_shape[-1]
+            time_steps = data_shape[-2]
+            input_shapes.append((time_steps, data_dim))
+
+            hyperparameters = parameters[view_names[view_idx]]
+            model_parameters = dict()
+            for parameter in hyperparameters.keys():
+                if parameter != "batch_size" and parameter != "epochs" and parameter != "optimizer":
+                    model_parameters[parameter] = hyperparameters[parameter]
+            view_dicts.append(model_parameters)
+
+            x_train.append(view[pair[0]])
+            x_test.append(view[pair[1]])
+            y_train.append(target_labels[pair[0]])
+            y_test.append(target_labels[pair[1]])
+
+        if type(y_train) is list:
+            y_o = y_train[0]
+            for y in y_train:
+                if not (y == y_o).all():
+                    raise RuntimeError
+            y_train = y_train[0]
+        else:
+            y_train = y_train
+        if type(y_test) is list:
+            y_o = y_test[0]
+            for y in y_test:
+                if not (y == y_o).all():
+                    raise RuntimeError
+            y_test = y_test[0]
+        else:
+            y_test= y_test
+
+        model = create_hierarchical_encoding_lstm(input_shapes, view_dicts, output)
+        model.fit(x_train, y_train, 8, 300, verbose=verbose, validation_data=(x_test, y_test))
+        y_pred = model.predict(x_test)
+        if scoring == "roc_auc":
+            roc_auc = metrics.roc_auc_score(y_test, y_pred, average=None)
+            scores.append(roc_auc)
+        if scoring == "accuracy":
+            y_pred = np.where(y_pred > 0.5, 1, 0)
+            scores.append(metrics.accuracy_score(y_test, y_pred))
+
+    scores = np.array(scores)
+    score = scores.mean()
+    matrix.append(["Hierarchical", score])
+    with open("file_lstm.txt", "w+") as f:
+        writer = csv.writer(f)
+        writer.writerows(matrix)

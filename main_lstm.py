@@ -30,9 +30,14 @@ if not os.path.exists(os.path.join(os.path.split(covarep_target_folder)[0], "cov
 visual_views = utilities.get_modality_views(os.path.join(database_folder + "_",
                                                          "of_frames"
                                                          ))
+best_visual_views = ["gaze", "head"]
+# visual_views = [e for e in visual_views if os.path.split(e)[1] in best_visual_views]
 acoustical_views = utilities.get_modality_views(os.path.join(database_folder + "_",
                                                              "covarep_frames"
                                                              ))
+best_acoustical_views = ["glottal_flow", "mcep"]
+# acoustical_views = [e for e in acoustical_views if os.path.split(e)[1] in best_acoustical_views]
+
 hu = 200
 dropout = None
 epochs = 1
@@ -61,7 +66,24 @@ custom_folds, custom_dicts = sa.get_cross_iterable(
 # import keras_tools.vgg_face_tools as vgg
 #
 # vgg.vgg_fine_tuning("/media/winbuntu/google-drive/INAOE/Thesis/Real-life_Deception_Detection_2016/Clips_/faces", batch_size=16, verbose=1)
-
+# custom_folds, custom_dicts = sa.get_cross_iterable(
+#     sa.get_dict(os.path.join(database_folder, "subjects.txt")),
+#     folds=5, processedDataFolder=datasets_folder
+# )
 # lstm.views_grid_search([acoustical_views, visual_views], custom_folds, seq_reduction_method, reduction_parameter)
-lstm.views_train_features("/media/winbuntu/google-drive/INAOE/Thesis/SpanishDatabase/Aborto_Amigo_/grid_search_results.txt",
-                          [acoustical_views, visual_views], seq_reduction_method, reduction_parameter)
+# lstm.views_train_features_cv("/media/winbuntu/google-drive/INAOE/Thesis/SpanishDatabase/Aborto_Amigo_/grid_search_results.txt",
+#                           [acoustical_views, visual_views], custom_folds, seq_reduction_method, reduction_parameter)
+#
+from sklearn.svm import SVC
+clf = SVC(random_state=0, tol=1e-7, max_iter=3000, kernel='poly', C=0.01, probability=True)
+booster = SVC(random_state=0, tol=1e-7, max_iter=3000, kernel='poly', C=0.01, probability=True) # spanish
+stacker = SVC(random_state=0, tol=1e-7, max_iter=3000, kernel='linear', probability=True)
+# booster = SVC(random_state=0, tol=1e-7, max_iter=3000, kernel='linear', probability=True) # court
+# lstm.cross_val_score(os.path.join(database_folder + "_", "grid_search_results.txt"),
+#                           [acoustical_views, visual_views], clf, custom_folds, "roc_auc", seq_reduction_method, reduction_parameter)
+lstm.boosting_cross_val_score(os.path.join(database_folder + "_", "grid_search_results.txt"),
+                              [acoustical_views, visual_views], booster, stacker, custom_folds,
+                              "roc_auc", seq_reduction_method, reduction_parameter)
+# lstm.hierarchical_cross_val_score(os.path.join(database_folder + "_", "grid_search_results.txt"),
+#                                   [acoustical_views, visual_views], custom_folds, "roc_auc",
+#                                   seq_reduction_method, reduction_parameter)

@@ -578,6 +578,34 @@ class BSSD:
         hyphotesis = np.array(hyphotesis)
         return hyphotesis
 
+    def predict_proba(self, dataset, boost_estimators=None, alpha=None):
+
+        if boost_estimators is None:
+            boost_estimators = self.boost_estimators
+        if alpha is None:
+            alpha = self.alpha
+
+        predicted_labels = []
+        hyphotesis = [[0 for i in range(len(self.classes))] for i in range(len(dataset[0]))]
+        for k in range(self.k_max):
+            prediction = boost_estimators[k][0].predict(dataset[boost_estimators[k][1]])
+            predicted_labels.append(
+                preprocessing.label_binarize(prediction, neg_label=-1, classes=list(reversed(self.classes)))
+            )
+        for i in range(len(dataset[0])):
+            predictions = [0 for i in range(len(self.classes))]
+            for k in range(self.k_max):
+                prediction = float(predicted_labels[k][i]) * alpha[k]
+                if prediction < 0:
+                    predictions[0] += abs(prediction)
+                else:
+                    predictions[1] += prediction
+            predictions = [e/sum(predictions) for e in predictions]
+            hyphotesis[i] = predictions
+        hyphotesis = np.array(hyphotesis)
+        return hyphotesis
+
+
     def set_classes(self, classes):
         self.classes = tuple(classes)
 
@@ -670,6 +698,23 @@ class BSSD:
         elif current_error > 0.9999:
             current_error = 0.9999
         return current_error
+
+
+class BSSD_From_Numpy(BSSD):
+    def __init__(self, booster, modality=None, databases=None, labels=None, dataset_names=None, k_max=50):
+        self.booster = booster
+        self.k_max = k_max
+        self.train_data = tuple(databases)
+        self.labels = tuple(labels)
+        self.classes = tuple(set(labels))
+        self.dataset_names = dataset_names
+        self.modality = modality
+        self.boost_estimators = [[base.clone(self.booster), -1] for i in range(k_max)]
+        self.model_weights = [[1.0 / len(self.labels) for i in range(len(self.labels))] for j in range(k_max)]
+        self.alpha = [0 for i in range(k_max)]
+        self.errors = [1.0 for i in range(k_max)]
+        self.plots_path = ""
+        self.set_plots_path()
 
 
 class S3DB(BSSD):
@@ -830,6 +875,16 @@ class S3DB(BSSD):
         stacking_dataset = np.array(stacking_dataset)
         return stacking_dataset
 
+    def predict(self, dataset):
+        stacking_dataset = self.get_stacking_dataset(dataset, len(dataset[0]))
+        predicted_labels = self.stacker.predict(stacking_dataset)
+        return predicted_labels
+
+    def predict_proba(self, dataset):
+        stacking_dataset = self.get_stacking_dataset(dataset, len(dataset[0]))
+        predicted_labels = self.stacker.predict_proba(stacking_dataset)
+        return predicted_labels
+
     def plot_best_views(self, destination=None, filenames=[]):
         if destination == None:
             destination = os.path.join(os.getcwd(), "s3db_plots", "best_views")
@@ -960,6 +1015,26 @@ class S3DB(BSSD):
         predicted_test_labels = stacker.predict(test_stacking_dataset)
         print("Model built for fold %s in %s sec" % (fold + 1, time.time() - now))
         return predicted_test_labels
+
+
+class S3DB_From_Numpy(S3DB):
+    def __init__(self, booster, stacker, modalities=None, databases=None, labels=None, dataset_names=None, k_max=50):
+        self.booster = booster
+        self.stacker = stacker
+        self.k_max = k_max
+        self.train_data = tuple(databases)
+        self.labels = tuple(labels)
+        self.classes = tuple(set(labels))
+        self.dataset_names = dataset_names
+        self.modalities = modalities
+        self.boost_estimators = [[[base.clone(self.booster), -1] for i in range(k_max)]
+                                 for i in range(len(self.train_data))]
+        self.model_weights = [[[1.0 / len(self.labels) for i in range(len(self.labels))]
+                               for j in range(k_max)] for k in range(len(self.train_data))]
+        self.alpha = [[0 for i in range(k_max)] for j in range(len(self.train_data))]
+        self.errors = [[1.0 for i in range(k_max)] for j in range(len(self.train_data))]
+        self.plots_path = ""
+        self.set_plots_path()
 
 
 class BSSD2(BSSD):
@@ -1319,6 +1394,11 @@ class S4DB(BSSD):
         hypothesis = self.stacker.predict(stacking_dataset)
         return hypothesis
 
+    def predict_proba(self, dataset):
+        stacking_dataset = self.get_stacking_dataset(dataset)
+        hypothesis = self.stacker.predict_proba(stacking_dataset)
+        return hypothesis
+
     def set_plots_path(self, path=None):
         if path is not None:
             self.plots_path = path
@@ -1358,3 +1438,21 @@ class S4DB(BSSD):
         predicted_test_labels = stacker.predict(test_stacking_dataset)
         print("Model built for fold %s in %s sec" % (fold + 1, time.time() - now))
         return predicted_test_labels
+
+
+class S4DB_From_Numpy(S4DB):
+
+    def __init__(self, booster, stacker, modality=None, databases=None, labels=None, dataset_names=None, k_max=50):
+        self.booster = booster
+        self.stacker = stacker
+        self.k_max = k_max
+        self.train_data = tuple(databases)
+        self.labels = tuple(labels)
+        self.classes = tuple(set(labels))
+        self.dataset_names = tuple(dataset_names)
+        self.boost_estimators = [[base.clone(self.booster), -1] for i in range(k_max)]
+        self.model_weights = [[1.0 / len(self.labels) for i in range(len(self.labels))] for j in range(k_max)]
+        self.alpha = [0 for i in range(k_max)]
+        self.errors = [1.0 for i in range(k_max)]
+        self.plots_path = ""
+        self.set_plots_path()

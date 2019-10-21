@@ -22,13 +22,10 @@ from sklearn.linear_model import LogisticRegression
 
 loo = LeaveOneOut()
 
-clf = LinearSVC(random_state=0, tol=1e-7, max_iter=3000)
-clf_2 = GaussianNB()
-clf = SVC(random_state=0, tol=1e-7, max_iter=3000, kernel='poly', C=0.01, probability=True)
-# clf = GaussianNB()
-# clf = RandomForestClassifier(random_state=0, n_estimators=100)
-# clf2 = RandomForestClassifier(random_state=0, n_estimators=100)
-clf_2 = LinearSVC(random_state=0, tol=1e-7, max_iter=3000)
+clf = LinearSVC(random_state=0, tol=1e-7, max_iter=3000)  # court cv
+clf = SVC(random_state=0, tol=1e-7, max_iter=3000, kernel='poly', C=0.01, probability=True)  # spanish
+# clf = RandomForestClassifier(random_state=0, n_estimators=100)  # court loo
+clf_2 = LinearSVC(random_state=0, tol=1e-7, max_iter=3000)  # both
 
 datasets_folder = "/media/winbuntu/google-drive/INAOE/Thesis/SpanishDatabase/Aborto_Amigo_/datasets"
 data = "best_views_cv"
