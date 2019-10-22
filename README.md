@@ -4,6 +4,7 @@ Extra dependencies needed:
 OpenFace (https://github.com/TadasBaltrusaitis/OpenFace)
 SyntaxNet (https://github.com/tensorflow/models/tree/master/research/syntaxnet)
 - Both can be installed in any desired folder, but both locations must be specified inside openface.yaml and syntaxnet.yaml in DDV/config
+- In ~/models/research/syntaxnet/syntaxnet/models, for Spanish, you need to add parsey_universal and the Spanish model. Also, you need to replace the demo.sh in ~/models/research/syntaxnet/syntaxnet/demo.sh (basically, you need to comment the last 4 lines, that convert the output from conll to tree)
 
 For Automatic Speech Recognition, IBM's Watson is used remotely (https://www.ibm.com/watson/services/speech-to-text/). You should create your own account and put your login data in "credentials.txt" inside DDV/audio (dummy data is included currently in the file as an example).
 
